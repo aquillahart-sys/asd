@@ -1,0 +1,65 @@
+﻿@model IEnumerable<EnrollmentSystem_G4.Models.Student>
+
+@{
+    ViewData["Title"] = "Student Directory";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Student Directory</h2>
+    <a asp-action="Create" class="btn btn-primary"><i class="bi bi-person-plus"></i> Register New Student</a>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Student No.</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Program</th>
+                    <th>Year Level</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No registered students found.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var student in Model)
+                    {
+                        <tr>
+                            <td><strong>@student.StudentNumber</strong></td>
+                            <td>@student.FullName</td>
+                            <td>@student.Email</td>
+                            <td>
+                                <span class="badge bg-info text-dark">
+                                    @(student.AssignedProgram?.ProgramCode ?? "Unassigned")
+                                </span>
+                            </td>
+                            <td>@student.YearLevel</td>
+                            <td class="text-center">
+                                <a asp-controller="Enrollment" asp-action="Assess" asp-route-id="@student.StudentId" class="btn btn-sm btn-outline-success">
+                                    Assess Fees
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

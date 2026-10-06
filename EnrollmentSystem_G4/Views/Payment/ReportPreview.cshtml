@@ -1,0 +1,15 @@
+﻿@{
+    ViewData["Title"] = ViewBag.ReportType;
+}
+
+<div class="container py-5" style="max-width: 700px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">← Back to Cashier Portal</a>
+        <button onclick="window.print()" class="btn btn-success btn-sm rounded-pill px-3">🖨️ Print Report</button>
+    </div>
+
+    <div class="card border-0 shadow rounded-4 p-4 bg-white">
+        <h4 class="fw-bold border-bottom pb-2 mb-3 text-dark">@ViewBag.ReportType</h4>
+        <pre class="bg-light p-3 rounded-3 text-dark fw-monospace" style="white-space: pre-wrap; font-size: 0.95rem;">@ViewBag.ReportText</pre>
+    </div>
+</div>
