@@ -6,15 +6,15 @@ namespace EnrollmentSystem_G4.Models
     {
         public int ScheduleId { get; set; }
         public int EnrollmentId { get; set; }
-        public string InstallmentName { get; set; } = string.Empty; // e.g., "Downpayment"
-        public decimal AmountDue { get; set; }
+        public string InstallmentName { get; set; } = string.Empty;
+        public decimal ExpectedAmount { get; set; }
+        public decimal AmountPaid { get; set; }
         public DateTime DueDate { get; set; }
         public string Status { get; set; } = "Unpaid";
 
-        // Domain Method: Check if the installment is overdue
         public bool IsOverdue()
         {
-            return Status != "Paid" && DateTime.Now.Date > DueDate.Date;
+            return Status != "Paid" && DateTime.Today > DueDate.Date;
         }
     }
 }

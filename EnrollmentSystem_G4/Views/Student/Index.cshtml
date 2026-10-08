@@ -52,9 +52,16 @@
                             </td>
                             <td>@student.YearLevel</td>
                             <td class="text-center">
-                                <a asp-controller="Enrollment" asp-action="Assess" asp-route-id="@student.StudentId" class="btn btn-sm btn-outline-success">
-                                    Assess Fees
-                                </a>
+                                @if (User.IsInRole("Administrator") || User.IsInRole("Registrar"))
+                                {
+                                    <a asp-controller="Enrollment" asp-action="Create" asp-route-studentId="@student.StudentId" class="btn btn-sm btn-outline-success">
+                                        Start Enrollment
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">View only</span>
+                                }
                             </td>
                         </tr>
                     }

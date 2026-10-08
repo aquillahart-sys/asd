@@ -1,11 +1,92 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Overview";
+    var connectionIsSuccessful = ViewBag.ConnectionStatus?.ToString().Contains("Successful") == true;
 }
 
-<div class="text-center mt-5">
-    <h1 class="display-4">Welcome</h1>
+<section class="home-banner">
+    <div>
+        <p class="eyebrow">ENROLLMENT SERVICES</p>
+        <h1>Welcome to your campus office.</h1>
+        <p class="home-intro-copy">Manage student records, academic programs, enrollment, and payments from one place.</p>
+    </div>
+    <span class="banner-icon" aria-hidden="true"><i class="bi bi-mortarboard-fill"></i></span>
+</section>
 
-    <div class="mt-4 p-3 rounded @(ViewBag.ConnectionStatus?.ToString().Contains("Successful") == true ? "alert alert-success" : "alert alert-danger")">
-        <h4>@ViewBag.ConnectionStatus</h4>
+<div class="home-section-heading">
+    <div>
+        <h2>Quick access</h2>
+        <p>Choose a service to get started.</p>
     </div>
 </div>
+
+<section class="home-links" aria-label="Enrollment services">
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a class="home-link" asp-controller="Student" asp-action="Index">
+            <span class="home-link-icon"><i class="bi bi-people-fill" aria-hidden="true"></i></span>
+            <span><strong>Student records</strong><small>Browse and register students</small></span>
+            <i class="bi bi-arrow-up-right home-link-arrow" aria-hidden="true"></i>
+        </a>
+        @if (User.IsInRole("Administrator") || User.IsInRole("Registrar"))
+        {
+            <a class="home-link" asp-controller="Program" asp-action="Index">
+                <span class="home-link-icon"><i class="bi bi-journals" aria-hidden="true"></i></span>
+                <span><strong>Academic programs</strong><small>Review available programs</small></span>
+                <i class="bi bi-arrow-up-right home-link-arrow" aria-hidden="true"></i>
+            </a>
+            <a class="home-link" asp-controller="Subject" asp-action="Index">
+                <span class="home-link-icon"><i class="bi bi-book-half" aria-hidden="true"></i></span>
+                <span><strong>Subjects and offerings</strong><small>Manage the catalog and active sections</small></span>
+                <i class="bi bi-arrow-up-right home-link-arrow" aria-hidden="true"></i>
+            </a>
+        }
+        <a class="home-link" asp-controller="Enrollment" asp-action="Index">
+            <span class="home-link-icon"><i class="bi bi-card-checklist" aria-hidden="true"></i></span>
+            <span><strong>Enrollments</strong><small>Review enrollment status and assessments</small></span>
+            <i class="bi bi-arrow-up-right home-link-arrow" aria-hidden="true"></i>
+        </a>
+        <a class="home-link" asp-controller="Payment" asp-action="Index">
+            <span class="home-link-icon"><i class="bi bi-receipt" aria-hidden="true"></i></span>
+            <span><strong>Balance dashboard</strong><small>View receipts, balances, and reports</small></span>
+            <i class="bi bi-arrow-up-right home-link-arrow" aria-hidden="true"></i>
+        </a>
+        @if (User.IsInRole("Administrator") || User.IsInRole("Cashier"))
+        {
+            <a class="home-link" asp-controller="Payment" asp-action="Create">
+                <span class="home-link-icon"><i class="bi bi-cash-coin" aria-hidden="true"></i></span>
+                <span><strong>Record payment</strong><small>Post an authorized receipt</small></span>
+                <i class="bi bi-arrow-up-right home-link-arrow" aria-hidden="true"></i>
+            </a>
+        }
+        @if (User.IsInRole("Administrator"))
+        {
+            <a class="home-link" asp-controller="User" asp-action="Index">
+                <span class="home-link-icon"><i class="bi bi-person-gear" aria-hidden="true"></i></span>
+                <span><strong>User accounts</strong><small>Manage staff access</small></span>
+                <i class="bi bi-arrow-up-right home-link-arrow" aria-hidden="true"></i>
+            </a>
+            <a class="home-link" asp-controller="Audit" asp-action="Index">
+                <span class="home-link-icon"><i class="bi bi-shield-check" aria-hidden="true"></i></span>
+                <span><strong>Audit log</strong><small>Review important system actions</small></span>
+                <i class="bi bi-arrow-up-right home-link-arrow" aria-hidden="true"></i>
+            </a>
+        }
+    }
+    else
+    {
+        <a class="home-link" asp-controller="Account" asp-action="Login">
+            <span class="home-link-icon"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i></span>
+            <span><strong>Sign in</strong><small>Authenticate to access campus services</small></span>
+            <i class="bi bi-arrow-up-right home-link-arrow" aria-hidden="true"></i>
+        </a>
+    }
+</section>
+
+<section class="connection-note @(connectionIsSuccessful ? "connection-ok" : "connection-error")" aria-live="polite">
+    <span class="connection-icon" aria-hidden="true"><i class="bi bi-database-check"></i></span>
+    <div class="connection-copy">
+        <p class="connection-label">SYSTEM STATUS</p>
+        <p class="mb-0">@ViewBag.ConnectionStatus</p>
+    </div>
+    <span class="connection-indicator" aria-hidden="true"></span>
+</section>

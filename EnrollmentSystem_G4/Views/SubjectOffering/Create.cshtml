@@ -1,0 +1,65 @@
+﻿@model EnrollmentSystem_G4.Models.SubjectOffering
+
+@{
+    ViewData["Title"] = "Create Subject Offering";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white"><h1 class="h4 mb-0">Create Subject Offering</h1></div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <div class="mb-3">
+                        <label asp-for="SubjectId" class="form-label">Subject</label>
+                        <select asp-for="SubjectId" class="form-select">
+                            <option value="">Select a subject</option>
+                            @foreach (var subject in ViewBag.Subjects as IEnumerable<EnrollmentSystem_G4.Models.Subject> ?? Enumerable.Empty<EnrollmentSystem_G4.Models.Subject>())
+                            {
+                                <option value="@subject.SubjectId">@subject.SubjectCode - @subject.SubjectDescription (@subject.Units units)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="SubjectId" class="text-danger"></span>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="AcademicYear" class="form-label"></label>
+                            <input asp-for="AcademicYear" class="form-control" placeholder="2026-2027" />
+                            <span asp-validation-for="AcademicYear" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Semester" class="form-label"></label>
+                            <select asp-for="Semester" class="form-select">
+                                <option value="">Select a semester</option>
+                                <option>1st Semester</option>
+                                <option>2nd Semester</option>
+                                <option>Summer</option>
+                            </select>
+                            <span asp-validation-for="Semester" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Section" class="form-label"></label>
+                            <input asp-for="Section" class="form-control" />
+                            <span asp-validation-for="Section" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-5 mb-3">
+                            <label asp-for="Schedule" class="form-label"></label>
+                            <input asp-for="Schedule" class="form-control" />
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label asp-for="Room" class="form-label"></label>
+                            <input asp-for="Room" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save offering</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using EnrollmentSystem_G4.Data;
 using EnrollmentSystem_G4.Models;
+using MySql.Data.MySqlClient;
 
 using AcademicProgram = EnrollmentSystem_G4.Models.Program;
 
@@ -12,10 +15,12 @@ namespace EnrollmentSystem_G4.Controllers
     public class StudentController : Controller
     {
         private readonly DatabaseHelper _db;
+        private readonly AuditLogger _audit;
 
-        public StudentController(DatabaseHelper db)
+        public StudentController(DatabaseHelper db, AuditLogger audit)
         {
             _db = db;
+            _audit = audit;
         }
 
         // GET: /Student/Index
@@ -61,6 +66,7 @@ namespace EnrollmentSystem_G4.Controllers
         }
 
         // GET: /Student/Create
+        [Authorize(Roles = "Administrator,Registrar")]
         public IActionResult Create()
         {
             ViewBag.Programs = GetProgramsList();
@@ -70,33 +76,60 @@ namespace EnrollmentSystem_G4.Controllers
         // POST: /Student/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator,Registrar")]
         public IActionResult Create(Student student)
         {
             if (ModelState.IsValid)
             {
+                int actorId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int id)
+                    ? id
+                    : throw new InvalidOperationException("The authenticated user ID is missing.");
+                int studentId;
                 try
                 {
-                    string query = @"INSERT INTO students (student_number, first_name, last_name, email, program_id, year_level) 
-                                     VALUES (@StudentNumber, @FirstName, @LastName, @Email, @ProgramId, @YearLevel)";
-
-                    var parameters = new Dictionary<string, object>
+                    studentId = _db.ExecuteInTransaction((connection, transaction) =>
                     {
-                        { "@StudentNumber", student.StudentNumber },
-                        { "@FirstName", student.FirstName },
-                        { "@LastName", student.LastName },
-                        { "@Email", student.Email },
-                        { "@ProgramId", student.ProgramId > 0 ? student.ProgramId : (object)DBNull.Value },
-                        { "@YearLevel", string.IsNullOrEmpty(student.YearLevel) ? "1st Year" : student.YearLevel }
-                    };
+                        _db.ExecuteNonQuery(
+                            connection,
+                            transaction,
+                            @"INSERT INTO students
+                                (student_number, first_name, last_name, email, program_id, year_level)
+                              VALUES
+                                (@StudentNumber, @FirstName, @LastName, @Email, @ProgramId, @YearLevel)",
+                            new Dictionary<string, object>
+                            {
+                                { "@StudentNumber", student.StudentNumber.Trim() },
+                                { "@FirstName", student.FirstName.Trim() },
+                                { "@LastName", student.LastName.Trim() },
+                                { "@Email", student.Email.Trim() },
+                                { "@ProgramId", student.ProgramId > 0 ? student.ProgramId : DBNull.Value },
+                                { "@YearLevel", string.IsNullOrEmpty(student.YearLevel) ? "1st Year" : student.YearLevel }
+                            });
 
-                    _db.ExecuteNonQuery(query, parameters);
-                    TempData["SuccessMessage"] = "Student registered successfully!";
-                    return RedirectToAction(nameof(Index));
+                        int newId = Convert.ToInt32(_db.ExecuteScalar(
+                            connection,
+                            transaction,
+                            "SELECT LAST_INSERT_ID()"));
+                        _audit.Log(
+                            connection,
+                            transaction,
+                            actorId,
+                            "STUDENT_CREATE",
+                            "Student",
+                            newId.ToString(),
+                            $"Created student record {student.StudentNumber}.");
+                        return newId;
+                    });
                 }
-                catch (Exception ex)
+                catch (MySqlException ex) when (ex.Number == 1062)
                 {
-                    ModelState.AddModelError("", $"Database error: {ex.Message}");
+                    ModelState.AddModelError(string.Empty, "The student number or email is already registered.");
+                    ViewBag.Programs = GetProgramsList();
+                    return View(student);
                 }
+
+                TempData["SuccessMessage"] = $"Student {student.StudentNumber} registered successfully.";
+                return RedirectToAction(nameof(Index));
             }
 
             ViewBag.Programs = GetProgramsList();

@@ -1,0 +1,90 @@
+﻿@model IEnumerable<EnrollmentSystem_G4.Models.User>
+
+@{
+    ViewData["Title"] = "User Accounts";
+    var currentUserId = int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var parsedUserId)
+        ? parsedUserId
+        : -1;
+}
+
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <p class="eyebrow">ADMINISTRATION</p>
+        <h1 class="h2 mb-1">User accounts</h1>
+        <p class="text-muted mb-0">Manage staff access and assigned roles.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-controller="Audit" asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-clock-history" aria-hidden="true"></i> View audit history
+        </a>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill" aria-hidden="true"></i> Create account
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="status">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">@TempData["ErrorMessage"]</div>
+}
+
+<div class="card app-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-people-fill me-2" aria-hidden="true"></i>Staff directory</span>
+        <span class="text-muted small">@Model.Count() account(s)</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr><th>Account</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th class="text-end">Actions</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <strong>@item.Username</strong>
+                            <div class="text-muted small">@item.FirstName @item.LastName</div>
+                        </td>
+                        <td>@item.Email</td>
+                        <td><span class="badge text-bg-secondary">@item.Role</span></td>
+                        <td>
+                            @if (item.IsActive)
+                            {
+                                <span class="badge text-bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">Disabled</span>
+                            }
+                        </td>
+                        <td>@item.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Edit" asp-route-id="@item.UserId" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil-square" aria-hidden="true"></i> Edit
+                            </a>
+                            @if (item.IsActive)
+                            {
+                                <form asp-action="Disable" asp-route-id="@item.UserId" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            disabled="@(item.UserId == currentUserId)"
+                                            onclick="return confirm('Disable this account? The user will no longer be able to sign in.');">
+                                        <i class="bi bi-person-x" aria-hidden="true"></i> Disable
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-5">No user accounts found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

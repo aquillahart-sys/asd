@@ -76,5 +76,74 @@ namespace EnrollmentSystem_G4.Data
                 return command.ExecuteScalar();
             }
         }
+
+        public T ExecuteInTransaction<T>(Func<MySqlConnection, MySqlTransaction, T> operation)
+        {
+            using var connection = new MySqlConnection(_connectionString);
+            connection.Open();
+
+            using var transaction = connection.BeginTransaction();
+            try
+            {
+                T result = operation(connection, transaction);
+                transaction.Commit();
+                return result;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+        public int ExecuteNonQuery(
+            MySqlConnection connection,
+            MySqlTransaction transaction,
+            string commandText,
+            Dictionary<string, object>? parameters = null)
+        {
+            using var command = new MySqlCommand(commandText, connection, transaction);
+            AddParameters(command, parameters);
+            return command.ExecuteNonQuery();
+        }
+
+        public object? ExecuteScalar(
+            MySqlConnection connection,
+            MySqlTransaction transaction,
+            string commandText,
+            Dictionary<string, object>? parameters = null)
+        {
+            using var command = new MySqlCommand(commandText, connection, transaction);
+            AddParameters(command, parameters);
+            return command.ExecuteScalar();
+        }
+
+        public DataTable ExecuteQuery(
+            MySqlConnection connection,
+            MySqlTransaction transaction,
+            string commandText,
+            Dictionary<string, object>? parameters = null)
+        {
+            using var command = new MySqlCommand(commandText, connection, transaction);
+            AddParameters(command, parameters);
+
+            using var adapter = new MySqlDataAdapter(command);
+            var dataTable = new DataTable();
+            adapter.Fill(dataTable);
+            return dataTable;
+        }
+
+        private static void AddParameters(MySqlCommand command, Dictionary<string, object>? parameters)
+        {
+            if (parameters == null)
+            {
+                return;
+            }
+
+            foreach (var parameter in parameters)
+            {
+                command.Parameters.AddWithValue(parameter.Key, parameter.Value ?? DBNull.Value);
+            }
+        }
     }
 }

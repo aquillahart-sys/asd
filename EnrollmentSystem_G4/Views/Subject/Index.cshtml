@@ -1,0 +1,37 @@
+﻿@model IEnumerable<EnrollmentSystem_G4.Models.Subject>
+
+@{
+    ViewData["Title"] = "Subjects";
+}
+
+<div class="page-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <p class="eyebrow">ACADEMICS</p>
+        <h1 class="h2 mb-1">Subjects</h1>
+        <p class="text-muted mb-0">Maintain the subject catalog used by active offerings.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i> Add subject</a>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="status">@TempData["SuccessMessage"]</div>
+}
+
+<div class="card app-card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th>Code</th><th>Subject</th><th>Units</th></tr></thead>
+            <tbody>
+                @foreach (var subject in Model)
+                {
+                    <tr><td><strong>@subject.SubjectCode</strong></td><td>@subject.SubjectDescription</td><td>@subject.Units</td></tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="3" class="text-center text-muted py-5">No subjects have been added.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

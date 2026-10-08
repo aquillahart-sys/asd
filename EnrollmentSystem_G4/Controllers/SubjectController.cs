@@ -1,19 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using EnrollmentSystem_G4.Data;
 using EnrollmentSystem_G4.Models;
 
 namespace EnrollmentSystem_G4.Controllers
 {
+    [Authorize(Roles = "Administrator,Registrar")]
     public class SubjectController : Controller
     {
         private readonly DatabaseHelper _db;
+        private readonly AuditLogger _audit;
 
-        public SubjectController(DatabaseHelper db)
+        public SubjectController(DatabaseHelper db, AuditLogger audit)
         {
             _db = db;
+            _audit = audit;
         }
 
         // GET: /Subject/Index
@@ -51,16 +56,28 @@ namespace EnrollmentSystem_G4.Controllers
         {
             if (ModelState.IsValid)
             {
-                string query = "INSERT INTO subjects (subject_code, subject_description, units) VALUES (@Code, @Desc, @Units)";
-                var parameters = new Dictionary<string, object>
+                string code = subject.SubjectCode.Trim();
+                int createdId = _db.ExecuteInTransaction((connection, transaction) =>
                 {
-                    { "@Code", subject.SubjectCode.Trim() },
-                    { "@Desc", subject.SubjectDescription.Trim() },
-                    { "@Units", subject.Units }
-                };
-
-                int rows = _db.ExecuteNonQuery(query, parameters);
-                if (rows > 0)
+                    _db.ExecuteNonQuery(
+                        connection,
+                        transaction,
+                        "INSERT INTO subjects (subject_code, subject_description, units) VALUES (@Code, @Desc, @Units)",
+                        new Dictionary<string, object>
+                        {
+                            { "@Code", code },
+                            { "@Desc", subject.SubjectDescription.Trim() },
+                            { "@Units", subject.Units }
+                        });
+                    int id = Convert.ToInt32(_db.ExecuteScalar(connection, transaction, "SELECT LAST_INSERT_ID()"));
+                    int actorId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int value)
+                        ? value
+                        : throw new InvalidOperationException("The authenticated user ID is missing.");
+                    _audit.Log(connection, transaction, actorId, "SUBJECT_CREATE", "Subject", id.ToString(),
+                        $"Created subject '{code}'.");
+                    return id;
+                });
+                if (createdId > 0)
                 {
                     TempData["SuccessMessage"] = "Subject created successfully!";
                     return RedirectToAction(nameof(Index));

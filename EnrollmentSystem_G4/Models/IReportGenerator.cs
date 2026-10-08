@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace EnrollmentSystem_G4.Models
 {
@@ -13,21 +14,31 @@ namespace EnrollmentSystem_G4.Models
     {
         public Student Student { get; set; }
         public Enrollment Enrollment { get; set; }
+        public decimal TotalPaid { get; set; }
 
-        public CorReportGenerator(Student student, Enrollment enrollment)
+        public CorReportGenerator(Student student, Enrollment enrollment, decimal totalPaid)
         {
             Student = student;
             Enrollment = enrollment;
+            TotalPaid = totalPaid;
         }
 
         public string Generate()
         {
+            string subjects = string.Join(
+                "\n",
+                Enrollment.EnrolledSubjects.Select(subject =>
+                    $"{subject.SubjectCode} - {subject.SubjectDescription} ({subject.Units} units), Section {subject.Section}, {subject.Schedule}"));
             return $"CERTIFICATE OF REGISTRATION\n" +
                    $"Student: {Student.GetFullName()} ({Student.StudentNumber})\n" +
-                   $"Program: {Student.AssignedProgram?.ProgramCode ?? "BSIT"}\n" +
+                   $"Program: {Student.AssignedProgram?.ProgramCode ?? "Unassigned"} · {Student.YearLevel}\n" +
                    $"Academic Year: {Enrollment.AcademicYear} ({Enrollment.Semester})\n" +
+                   $"Subjects:\n{subjects}\n" +
                    $"Total Units: {Enrollment.TotalUnits}\n" +
-                   $"Total Assessment: ₱{Enrollment.TotalAssessment:N2}\n" +
+                   $"Tuition and Fees: ₱{Enrollment.TotalAssessment:N2}\n" +
+                   $"Required Downpayment: ₱{Enrollment.RequiredDownpayment:N2}\n" +
+                   $"Total Paid: ₱{TotalPaid:N2}\n" +
+                   $"Remaining Balance: ₱{Math.Max(0, Enrollment.TotalAssessment - TotalPaid):N2}\n" +
                    $"Status: {Enrollment.Status}";
         }
     }
@@ -48,7 +59,7 @@ namespace EnrollmentSystem_G4.Models
 
         public string Generate()
         {
-            decimal balance = TotalAssessment - TotalPayment;
+            decimal balance = Math.Max(0, TotalAssessment - TotalPayment);
             return $"STATEMENT OF ACCOUNT\n" +
                    $"Student: {Student.GetFullName()} ({Student.StudentNumber})\n" +
                    $"Total Fees Assessed: ₱{TotalAssessment:N2}\n" +

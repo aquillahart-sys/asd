@@ -6,6 +6,8 @@
         public string SubjectCode { get; set; } = string.Empty;
         public string SubjectDescription { get; set; } = string.Empty;
         public int Units { get; set; }
+        public string Section { get; set; } = string.Empty;
+        public string? Schedule { get; set; }
 
         // Domain Method: Calculate fee for this specific subject
         public decimal CalculateSubjectFee(decimal ratePerUnit = 500.00m)

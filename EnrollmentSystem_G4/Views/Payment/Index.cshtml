@@ -1,68 +1,71 @@
 ﻿@model IEnumerable<EnrollmentSystem_G4.Models.Payment>
 
 @{
-    ViewData["Title"] = "Cashier Financial Portal";
+    ViewData["Title"] = "Balance dashboard";
 }
 
-<div class="container-fluid py-4 px-4" style="background-color: #f8fafc; min-height: 100vh;">
-
-    <!-- Top Header Banner -->
-    <div class="card border-0 shadow-sm rounded-4 text-white mb-4" style="background-color: #042e22;">
-        <div class="card-body p-4 d-flex justify-content-between align-items-center">
+<div class="container-fluid py-4 px-0 payment-dashboard">
+    <section class="card payment-banner border-0 shadow-sm text-white mb-4">
+        <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div>
-                <h2 class="fw-bold mb-1">Cashier Financial Portal</h2>
-                <p class="text-light text-opacity-75 mb-0">Manage student tuition billing, receipt generation, and fee balance directory.</p>
+                <p class="eyebrow mb-2">FINANCIAL SERVICES</p>
+                <h1 class="h2 fw-bold mb-1">Cashier Financial Portal</h1>
+                <p class="text-light text-opacity-75 mb-0">Review receipts, student balances, and installment activity.</p>
             </div>
-            <a asp-controller="Payment" asp-action="Create" class="btn btn-success fw-bold px-4 py-2 rounded-3 shadow-sm">
-                + New Payment Transaction
-            </a>
+            @if (User.IsInRole("Administrator") || User.IsInRole("Cashier"))
+            {
+                <a asp-controller="Payment" asp-action="Create" class="btn fw-bold px-4 py-2 rounded-3">
+                    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Record payment
+                </a>
+            }
         </div>
-    </div>
+    </section>
 
-    <!-- Metrics Cards Row -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
-                <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">TOTAL COLLECTIONS</span>
-                <h2 class="fw-bold mt-2 mb-1" style="color: #0f172a;">₱@string.Format("{0:N2}", ViewBag.TotalCollections ?? 0)</h2>
-                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill fw-medium" style="width: fit-content;">
-                    ✓ Recorded in System
+    <section class="row g-3 mb-4" aria-label="Payment overview">
+        <div class="col-12 col-md-6 col-xxl-3">
+            <article class="card metric-card border-0 shadow-sm rounded-4 p-3">
+                <span class="text-muted small fw-semibold text-uppercase">Total collections</span>
+                <h2 class="fw-bold mt-2 mb-1">₱@string.Format("{0:N2}", ViewBag.TotalCollections ?? 0)</h2>
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill fw-medium align-self-start">
+                    Recorded in system
                 </span>
-            </div>
+            </article>
         </div>
-
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
-                <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">OUTSTANDING BALANCES</span>
-                <h2 class="fw-bold mt-2 mb-1" style="color: #0f172a;">₱@string.Format("{0:N2}", ViewBag.OutstandingBalances ?? 0)</h2>
-                <span class="text-danger small fw-medium">Collectable Tuition Fees</span>
-            </div>
+        <div class="col-12 col-md-6 col-xxl-3">
+            <article class="card metric-card border-0 shadow-sm rounded-4 p-3">
+                <span class="text-muted small fw-semibold text-uppercase">Outstanding balances</span>
+                <h2 class="fw-bold mt-2 mb-1">₱@string.Format("{0:N2}", ViewBag.OutstandingBalances ?? 0)</h2>
+                <span class="text-danger small fw-medium">Collectable tuition fees</span>
+            </article>
         </div>
-
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
-                <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px;">ISSUED RECEIPTS</span>
-                <h2 class="fw-bold mt-2 mb-1" style="color: #0f172a;">@(ViewBag.IssuedReceiptsCount ?? 0) Receipts</h2>
-                <span class="text-muted small">Official Transactions Issued</span>
-            </div>
+        <div class="col-12 col-md-6 col-xxl-3">
+            <article class="card metric-card border-0 shadow-sm rounded-4 p-3">
+                <span class="text-muted small fw-semibold text-uppercase">Issued receipts</span>
+                <h2 class="fw-bold mt-2 mb-1">@(ViewBag.IssuedReceiptsCount ?? 0)</h2>
+                <span class="text-muted small">Official transactions issued</span>
+            </article>
         </div>
-    </div>
+        <div class="col-12 col-md-6 col-xxl-3">
+            <article class="card metric-card border-0 shadow-sm rounded-4 p-3">
+                <span class="text-muted small fw-semibold text-uppercase">Overdue installments</span>
+                <h2 class="fw-bold mt-2 mb-1 text-danger">@(ViewBag.OverdueInstallments ?? 0)</h2>
+                <span class="text-muted small">Past due with a balance remaining</span>
+            </article>
+        </div>
+    </section>
 
-
-    <!-- Recent Payments Table with Report Generators Integrated -->
-    <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
-        <h5 class="fw-bold mb-3" style="color: #1e293b;">Recent Payment Transactions</h5>
-
+    <section class="card recent-payments-card border-0 shadow-sm rounded-4 p-3 p-md-4">
+        <h2 class="h5 fw-bold mb-3">Recent payment transactions</h2>
         <div class="table-responsive">
-            <table class="table align-middle table-hover border-0 mb-0">
-                <thead class="table-light text-muted small text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+            <table class="table align-middle table-hover mb-0">
+                <thead class="table-light text-muted small text-uppercase">
                     <tr>
-                        <th class="py-3">OR Number</th>
-                        <th class="py-3">Student Name</th>
-                        <th class="py-3">Fee Type</th>
-                        <th class="py-3">Amount Paid</th>
-                        <th class="py-3">Date</th>
-                        <th class="py-3 text-center">Generate Report</th>
+                        <th scope="col">Receipt</th>
+                        <th scope="col">Student</th>
+                        <th scope="col">Payment type</th>
+                        <th scope="col">Amount paid</th>
+                        <th scope="col">Date</th>
+                        <th scope="col" class="text-center">Reports</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -82,23 +85,32 @@
                                     <span class="fw-semibold text-dark">@item.StudentName</span>
                                     <span class="text-muted small">(@item.StudentNumber)</span>
                                 </td>
-                                <td class="text-secondary">@item.FeeType</td>
+                                <td>@item.FeeType</td>
                                 <td class="fw-bold text-success">₱@string.Format("{0:N2}", item.AmountPaid)</td>
                                 <td class="text-muted small">@item.PaymentDate.ToString("MMM d, yyyy, h:mm tt")</td>
                                 <td class="text-center">
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-light border rounded-pill fw-semibold px-3 dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                            📄 Action
+                                        <button class="btn btn-sm btn-outline-secondary rounded-pill fw-semibold px-3 dropdown-toggle"
+                                                type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            View reports
                                         </button>
-                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                            @if (item.EnrollmentStatus == "CONFIRMED")
+                                            {
+                                                <li>
+                                                    <a class="dropdown-item" asp-action="GenerateReport" asp-route-type="COR" asp-route-enrollmentId="@item.EnrollmentId">
+                                                        Certificate of Registration
+                                                    </a>
+                                                </li>
+                                            }
                                             <li>
-                                                <a class="dropdown-item small fw-semibold" asp-controller="Payment" asp-action="GenerateReport" asp-route-type="COR" asp-route-enrollmentId="@item.EnrollmentId">
-                                                    📜 CorReportGenerator (COR)
+                                                <a class="dropdown-item" asp-action="GenerateReport" asp-route-type="Balance" asp-route-enrollmentId="@item.EnrollmentId">
+                                                    Statement of account
                                                 </a>
                                             </li>
                                             <li>
-                                                <a class="dropdown-item small fw-semibold" asp-controller="Payment" asp-action="GenerateReport" asp-route-type="Balance" asp-route-enrollmentId="@item.EnrollmentId">
-                                                    💳 BalanceReportGenerator
+                                                <a class="dropdown-item" asp-action="GenerateReport" asp-route-type="History" asp-route-enrollmentId="@item.EnrollmentId">
+                                                    Payment history
                                                 </a>
                                             </li>
                                         </ul>
@@ -110,6 +122,5 @@
                 </tbody>
             </table>
         </div>
-    </div>
-
+    </section>
 </div>

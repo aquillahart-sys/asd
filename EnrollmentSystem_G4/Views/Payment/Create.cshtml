@@ -1,141 +1,144 @@
 ﻿@model EnrollmentSystem_G4.Models.Payment
 
 @{
-    ViewData["Title"] = "Cashier Payments";
+    ViewData["Title"] = "Record Payment";
 }
 
-<div class="container-fluid py-3 px-4" style="background-color: #f8fafc; min-height: 100vh;">
-
-    <!-- Top Navigation Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-        <h3 class="fw-bold mb-0" style="color: #0f172a;">Cashier Payments</h3>
-
-        <div class="d-flex align-items-center gap-3">
-            <div class="text-end me-1">
-                <div class="fw-semibold text-muted small">@DateTime.Now.ToString("ddd, MMM d, yyyy")</div>
-                <div class="text-muted" style="font-size: 0.75rem;">Academic Year 2026-2027</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Center Card Section -->
+<div class="container-fluid py-3 px-0 payment-form">
     <div class="row justify-content-center">
-        <div class="col-lg-8 col-md-10">
-
-            <div class="mb-4">
-                <h4 class="fw-bold mb-1" style="color: #0f172a;">Process Student Payment Transaction</h4>
-                <p class="text-muted small">Record tuition fees, issue official receipts, and update student fee balances.</p>
-            </div>
-
-            <!-- Main Form Card -->
-            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 p-md-5">
+        <div class="col-lg-8">
+            <h1 class="h3 form-heading mb-1">Record Payment</h1>
+            <p class="text-muted">Payments are saved as individual transactions; account balances are recalculated from payment history.</p>
+            <div class="card payment-entry-card shadow-sm">
+            <div class="card-body">
                 <form asp-action="Create" method="post">
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
-                    <!-- SELECT STUDENT -->
-                    <div class="mb-4">
-                        <label class="form-label text-muted fw-bold small text-uppercase" style="letter-spacing: 0.5px;">SELECT STUDENT</label>
-                        <select id="studentSelect" asp-for="EnrollmentId" class="form-select form-select-lg rounded-3 fs-6 border-secondary-subtle" required onchange="updateSummaryMetrics()">
-                            <option value="" data-assessment="0" data-paid="0" data-balance="0">-- Select Student --</option>
-                            @if (ViewBag.Students != null)
+                    <div class="mb-3">
+                        <label asp-for="EnrollmentId" class="form-label">Assessed or confirmed enrollment</label>
+                        <select asp-for="EnrollmentId" id="enrollmentSelect" class="form-select" required>
+                            <option value="0">Select an enrollment</option>
+                            @if (ViewBag.Enrollments != null)
                             {
-                                foreach (var student in ViewBag.Students)
+                                foreach (var enrollment in ViewBag.Enrollments)
                                 {
-                                    <option value="@student.EnrollmentId"
-                                            data-assessment="@student.TotalAssessment"
-                                            data-paid="@student.AmountPaid"
-                                            data-balance="@student.Balance">
-                                        @student.DisplayName
+                                    <option value="@enrollment.EnrollmentId"
+                                            data-status="@enrollment.Status"
+                                            data-assessment="@enrollment.TotalAssessment"
+                                            data-paid="@enrollment.AmountPaid"
+                                            data-balance="@enrollment.Balance"
+                                            data-downpayment="@enrollment.RequiredDownpayment"
+                                            selected="@(enrollment.EnrollmentId == Model.EnrollmentId)">
+                                        @enrollment.DisplayName
                                     </option>
                                 }
                             }
                         </select>
+                        <span asp-validation-for="EnrollmentId" class="text-danger"></span>
                     </div>
 
-                    <!-- FINANCIAL SUMMARY CONTAINER -->
-                    <div class="card border-0 rounded-4 p-3 mb-4" style="background-color: #f8fafc;">
-                        <div class="row text-center align-items-center">
-                            <div class="col-4 border-end">
-                                <span class="text-muted fw-semibold small text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">TOTAL ASSESSMENT</span>
-                                <div id="lblAssessment" class="fw-bold fs-5 mt-1" style="color: #0f172a;">₱0</div>
-                            </div>
-                            <div class="col-4 border-end">
-                                <span class="text-muted fw-semibold small text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">AMOUNT PAID</span>
-                                <div id="lblPaid" class="fw-bold fs-5 mt-1 text-success">₱0</div>
-                            </div>
-                            <div class="col-4">
-                                <span class="text-muted fw-semibold small text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">CURRENT BALANCE</span>
-                                <div id="lblBalance" class="fw-bold fs-5 mt-1 text-danger">₱0</div>
-                            </div>
+                    <div class="card summary-card border-0 mb-3">
+                        <div class="card-body d-flex flex-wrap justify-content-between gap-3">
+                            <div><span class="small text-muted">Assessment</span><div id="assessmentValue" class="summary-value fw-bold">₱0.00</div></div>
+                            <div><span class="small text-muted">Total paid</span><div id="paidValue" class="summary-value fw-bold text-success">₱0.00</div></div>
+                            <div><span class="small text-muted">Balance</span><div id="balanceValue" class="summary-value fw-bold text-danger">₱0.00</div></div>
+                            <div><span class="small text-muted">Required downpayment</span><div id="downpaymentValue" class="summary-value fw-bold">₱0.00</div></div>
                         </div>
                     </div>
 
-                    <!-- PAYMENT AMOUNT & PAYMENT CATEGORY -->
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label text-muted fw-bold small text-uppercase" style="letter-spacing: 0.5px;">PAYMENT AMOUNT (₱)</label>
-                            <input id="txtAmount" asp-for="AmountPaid" type="number" step="0.01" class="form-control form-control-lg rounded-3 fs-6 border-secondary-subtle" placeholder="0" required />
-                            <span asp-validation-for="AmountPaid" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label text-muted fw-bold small text-uppercase" style="letter-spacing: 0.5px;">PAYMENT CATEGORY</label>
-                            <select asp-for="FeeType" class="form-select form-select-lg rounded-3 fs-6 border-secondary-subtle">
-                                <option value="Full Tuition Fee">Full Tuition Fee</option>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="FeeType" class="form-label">Payment type</label>
+                            <select asp-for="FeeType" id="paymentType" class="form-select">
                                 <option value="Downpayment">Downpayment</option>
-                                <option value="Partial Tuition">Partial Tuition</option>
-                                <option value="Miscellaneous Fee">Miscellaneous Fee</option>
+                                <option value="Monthly Payment">Monthly Payment</option>
+                            </select>
+                            <span asp-validation-for="FeeType" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ScheduleId" class="form-label">Monthly installment</label>
+                            <select asp-for="ScheduleId" id="scheduleSelect" class="form-select">
+                                <option value="">Select an installment</option>
+                                @if (ViewBag.Schedules != null)
+                                {
+                                    foreach (var schedule in ViewBag.Schedules)
+                                    {
+                                        <option value="@schedule.ScheduleId">
+                                            @schedule.DueDate.ToString("MMM d, yyyy") · ₱@((schedule.ExpectedAmount - schedule.AmountPaid).ToString("N2")) remaining (@schedule.Status)
+                                        </option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="ScheduleId" class="text-danger"></span>
+                            <div class="form-text">Required for monthly payments; leave blank for a downpayment.</div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ReceiptNumber" class="form-label">Receipt / reference number</label>
+                            <input asp-for="ReceiptNumber" class="form-control" maxlength="50" autocomplete="off" required />
+                            <span asp-validation-for="ReceiptNumber" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="PaymentDate" class="form-label">Payment date</label>
+                            <input asp-for="PaymentDate" type="date" class="form-control" required />
+                            <span asp-validation-for="PaymentDate" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="AmountPaid" class="form-label">Amount (₱)</label>
+                            <input asp-for="AmountPaid" type="number" min="0.01" step="0.01" class="form-control" required />
+                            <span asp-validation-for="AmountPaid" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="PaymentMethod" class="form-label"></label>
+                            <select asp-for="PaymentMethod" class="form-select">
+                                <option>Cash</option>
+                                <option>GCash</option>
+                                <option>Bank Transfer</option>
+                                <option>Check</option>
                             </select>
                         </div>
                     </div>
 
-                    <!-- PAYMENT METHOD -->
-                    <div class="mb-4">
-                        <label class="form-label text-muted fw-bold small text-uppercase" style="letter-spacing: 0.5px;">PAYMENT METHOD</label>
-                        <select asp-for="PaymentMethod" class="form-select form-select-lg rounded-3 fs-6 border-secondary-subtle" required>
-                            <option value="Cash">Cash</option>
-                            <option value="GCash">GCash</option>
-                            <option value="Bank Transfer">Bank Transfer</option>
-                            <option value="Check">Check</option>
-                        </select>
-                    </div>
-
-                    <!-- SUBMIT BUTTON -->
-                    <div class="d-flex justify-content-end mt-4">
-                        <button type="submit" class="btn btn-success btn-lg fw-bold px-4 py-3 rounded-3 shadow-sm d-flex align-items-center gap-2" style="background-color: #059669; border: none;">
-                             Process Transaction
-                        </button>
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Save payment</button>
                     </div>
                 </form>
+                </div>
             </div>
-
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        function updateSummaryMetrics() {
-            var select = document.getElementById("studentSelect");
-            var selectedOption = select.options[select.selectedIndex];
+        const enrollmentSelect = document.getElementById("enrollmentSelect");
+        const scheduleSelect = document.getElementById("scheduleSelect");
+        const paymentType = document.getElementById("paymentType");
 
-            var assessment = parseFloat(selectedOption.getAttribute("data-assessment") || 0);
-            var paid = parseFloat(selectedOption.getAttribute("data-paid") || 0);
-            var balance = parseFloat(selectedOption.getAttribute("data-balance") || 0);
+        function updatePaymentForm() {
+            const option = enrollmentSelect.options[enrollmentSelect.selectedIndex];
+            const status = option.dataset.status || "";
+            const currency = value => "₱" + Number(value || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-            document.getElementById("lblAssessment").innerText = "₱" + assessment.toLocaleString('en-US');
-            document.getElementById("lblPaid").innerText = "₱" + paid.toLocaleString('en-US');
-            document.getElementById("lblBalance").innerText = "₱" + balance.toLocaleString('en-US');
+            document.getElementById("assessmentValue").textContent = currency(option.dataset.assessment);
+            document.getElementById("paidValue").textContent = currency(option.dataset.paid);
+            document.getElementById("balanceValue").textContent = currency(option.dataset.balance);
+            document.getElementById("downpaymentValue").textContent = currency(option.dataset.downpayment);
 
-            // Auto-populate payment amount with remaining balance if selected
-            if (balance > 0) {
-                document.getElementById("txtAmount").value = balance;
+            paymentType.value = status === "ASSESSED" ? "Downpayment" : "Monthly Payment";
+            paymentType.disabled = status === "";
+            scheduleSelect.disabled = status !== "CONFIRMED";
+            if (status !== "CONFIRMED") {
+                scheduleSelect.value = "";
             }
         }
 
-        // Trigger on load if student pre-selected
-        document.addEventListener("DOMContentLoaded", function () {
-            updateSummaryMetrics();
-        });
+        enrollmentSelect.addEventListener("change", updatePaymentForm);
+        updatePaymentForm();
     </script>
 }

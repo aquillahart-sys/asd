@@ -1,36 +1,27 @@
-﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace EnrollmentSystem_G4.Models
 {
     public class Payment
     {
-        private decimal _amountPaid;
-
         public int PaymentId { get; set; }
         public int EnrollmentId { get; set; }
+        public int? ScheduleId { get; set; }
         public int StudentId { get; set; }
         public string ReceiptNumber { get; set; } = string.Empty;
 
-        public decimal AmountPaid
-        {
-            get => _amountPaid;
-            set
-            {
-                if (value <= 0)
-                {
-                    throw new ArgumentException("Payment amount must be greater than zero.");
-                }
-                _amountPaid = value;
-            }
-        }
+        [Range(typeof(decimal), "0.01", "999999999.99", ErrorMessage = "Enter a payment amount greater than zero.")]
+        public decimal AmountPaid { get; set; }
 
         public DateTime PaymentDate { get; set; } = DateTime.Now;
         public string FeeType { get; set; } = "Full Tuition Fee"; // e.g., Full Tuition Fee, Downpayment, Partial Tuition
         public string PaymentMethod { get; set; } = "Cash"; // Cash, GCash, Bank Transfer, Check
+        public int? ProcessedBy { get; set; }
 
         // Student Info for Dashboard View
         public string StudentName { get; set; } = string.Empty;
         public string StudentNumber { get; set; } = string.Empty;
+        public string EnrollmentStatus { get; set; } = string.Empty;
 
         // Transferred Financial Context Properties
         public decimal TotalAssessment { get; set; }
