@@ -2,6 +2,7 @@
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
     var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var isLoginPage = currentController == "Account" && currentAction == "Login";
     var canManageAcademics = User.IsInRole("Administrator") || User.IsInRole("Registrar");
 }
 <!DOCTYPE html>
@@ -17,7 +18,7 @@
     <link rel="stylesheet" href="~/EnrollmentSystem_G4.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <div class="app-shell">
+    <div class="app-shell @(isLoginPage ? "auth-shell" : "")">
         <aside class="offcanvas-lg offcanvas-start app-sidebar" tabindex="-1" id="appSidebar" aria-labelledby="sidebarBrand">
             <div class="sidebar-heading">
                 <a class="sidebar-brand" asp-area="" asp-controller="Home" asp-action="Index" id="sidebarBrand">

@@ -282,6 +282,135 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--discord-muted);
 }
 
+.auth-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(88, 101, 242, .16), transparent 42%),
+    var(--discord-bg);
+}
+
+.auth-shell .app-sidebar,
+.auth-shell .app-topbar,
+.auth-shell .site-footer {
+  display: none;
+}
+
+.auth-shell .app-main {
+  min-height: 100vh;
+}
+
+.auth-shell .page-shell {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.25rem, 4vw, 3rem);
+}
+
+.login-page {
+  width: min(100%, 27rem);
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  width: fit-content;
+  margin: 0 auto 1.5rem;
+  color: var(--discord-text);
+}
+
+.login-brand:hover {
+  color: #fff;
+}
+
+.login-brand-mark {
+  display: grid;
+  width: 2.85rem;
+  height: 2.85rem;
+  place-items: center;
+  color: #fff;
+  background: var(--discord-blurple);
+  border-radius: .85rem;
+  box-shadow: 0 .5rem 1.5rem rgba(88, 101, 242, .28);
+  font-size: 1.35rem;
+}
+
+.login-brand strong,
+.login-brand small {
+  display: block;
+}
+
+.login-brand strong {
+  font-size: 1rem;
+  letter-spacing: -.02em;
+}
+
+.login-brand small {
+  margin-top: .12rem;
+  color: var(--discord-muted);
+  font-size: .64rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+}
+
+.login-card {
+  overflow: hidden;
+  border-color: rgba(255, 255, 255, .09);
+  border-radius: 1rem;
+  box-shadow: 0 1.25rem 3.5rem rgba(0, 0, 0, .28);
+}
+
+.login-card .card-body {
+  padding: clamp(1.5rem, 5vw, 2.25rem);
+}
+
+.login-eyebrow {
+  color: #aab2ff;
+}
+
+.login-card h1 {
+  margin: 0;
+  font-size: clamp(1.55rem, 5vw, 1.8rem);
+  letter-spacing: -.035em;
+}
+
+.login-copy {
+  margin: .45rem 0 1.7rem;
+  color: var(--discord-muted);
+  font-size: .9rem;
+}
+
+.login-card .form-label {
+  color: var(--discord-text);
+  font-size: .86rem;
+  font-weight: 600;
+}
+
+.login-card .form-control {
+  min-height: 3rem;
+  border-radius: .55rem;
+}
+
+.login-card .text-danger {
+  display: block;
+  margin-top: .25rem;
+  font-size: .8rem;
+}
+
+.login-submit {
+  min-height: 3rem;
+  border-radius: .55rem;
+  font-weight: 700;
+}
+
+.login-footer {
+  margin: 1.25rem 0 0;
+  color: var(--discord-muted);
+  font-size: .78rem;
+  text-align: center;
+}
+
 .home-banner {
   display: flex;
   min-height: 190px;
