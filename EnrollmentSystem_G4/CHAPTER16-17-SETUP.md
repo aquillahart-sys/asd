@@ -28,8 +28,14 @@ first; do not apply it to a database that has not been backed up.
    The command prompts for the account details and password; it does not echo
    the password. Create Registrar and Cashier accounts through the administrator
    user-management page.
-5. Existing unsalted password hashes are intentionally not accepted. Reset each
-   account that must be retained through the local administrative command:
+5. Login accepts only the application's salted PBKDF2-SHA256 format (210,000
+   iterations, a 16-byte salt, and a 32-byte hash, stored as Base64). Existing
+   unsalted or plaintext credentials are intentionally not accepted. The
+   pre-Chapter-16/17 project did not document or implement a legacy password
+   verification format, so a legacy `password_hash` value cannot safely be
+   verified or upgraded at sign-in. Reset each existing account that must be
+   retained through the local administrative command; this replaces its
+   credential without changing its active status:
 
    ```powershell
    dotnet run --project EnrollmentSystem_G4 -- --reset-password <username>
