@@ -1,0 +1,38 @@
+﻿@model IEnumerable<EnrollmentSystem_G4.Models.SubjectOffering>
+
+@{
+    ViewData["Title"] = "Subject Offerings";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3">Subject Offerings</h1>
+    <a asp-action="Create" class="btn btn-primary">Create offering</a>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead><tr><th>Term</th><th>Subject</th><th>Units</th><th>Section</th><th>Schedule</th><th>Room</th></tr></thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr><td colspan="6" class="text-center text-muted py-4">No offerings have been created.</td></tr>
+            }
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.AcademicYear - @item.Semester</td>
+                    <td>@item.SubjectCode - @item.SubjectDescription</td>
+                    <td>@item.Units</td>
+                    <td>@item.Section</td>
+                    <td>@item.Schedule</td>
+                    <td>@item.Room</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

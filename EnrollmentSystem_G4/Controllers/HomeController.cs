@@ -7,10 +7,12 @@ namespace EnrollmentSystem_G4.Controllers
     public class HomeController : Controller
     {
         private readonly DatabaseHelper _db;
+        private readonly ILogger<HomeController> _logger;
 
-        public HomeController(DatabaseHelper db)
+        public HomeController(DatabaseHelper db, ILogger<HomeController> logger)
         {
             _db = db;
+            _logger = logger;
         }
 
         public IActionResult Index()
@@ -26,7 +28,8 @@ namespace EnrollmentSystem_G4.Controllers
             }
             catch (Exception ex)
             {
-                ViewBag.ConnectionStatus = $"Database Connection Failed: {ex.Message}";
+                _logger.LogError(ex, "Database connectivity check failed.");
+                ViewBag.ConnectionStatus = "Database connection failed. Verify that MySQL is running and configured.";
             }
 
             return View();

@@ -1,0 +1,65 @@
+﻿@model EnrollmentSystem_G4.Models.EnrollmentSelectionViewModel
+
+@{
+    ViewData["Title"] = "Create Pending Enrollment";
+}
+
+<h1 class="h3">Create Pending Enrollment</h1>
+<p class="text-muted">Student: <strong>@Model.Student.FullName</strong> (@Model.Student.StudentNumber)</p>
+
+<form asp-action="Create" method="get" class="row g-2 align-items-end mb-3">
+    <input type="hidden" name="studentId" value="@Model.StudentId" />
+    <div class="col-sm-4">
+        <label asp-for="AcademicYear" class="form-label"></label>
+        <input asp-for="AcademicYear" name="academicYear" class="form-control" />
+    </div>
+    <div class="col-sm-4">
+        <label asp-for="Semester" class="form-label"></label>
+        <select asp-for="Semester" name="semester" class="form-select">
+            <option>1st Semester</option>
+            <option>2nd Semester</option>
+            <option>Summer</option>
+        </select>
+    </div>
+    <div class="col-sm-4"><button type="submit" class="btn btn-outline-primary">Load offerings</button></div>
+</form>
+
+<form asp-action="Create" method="post">
+    <input asp-for="StudentId" type="hidden" />
+    <input asp-for="AcademicYear" type="hidden" />
+    <input asp-for="Semester" type="hidden" />
+    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+    @if (Model.AvailableOfferings.Count == 0)
+    {
+        <div class="alert alert-warning">
+            No offerings are available for this term.
+            @if (User.IsInRole("Administrator") || User.IsInRole("Registrar"))
+            {
+                <a asp-controller="SubjectOffering" asp-action="Create">Create a subject offering</a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead><tr><th>Select</th><th>Subject</th><th>Units</th><th>Section</th><th>Schedule</th><th>Room</th></tr></thead>
+                <tbody>
+                    @foreach (var offering in Model.AvailableOfferings)
+                    {
+                        <tr>
+                            <td><input type="checkbox" name="SelectedOfferingIds" value="@offering.OfferingId" class="form-check-input" /></td>
+                            <td>@offering.SubjectCode - @offering.SubjectDescription</td>
+                            <td>@offering.Units</td>
+                            <td>@offering.Section</td>
+                            <td>@offering.Schedule</td>
+                            <td>@offering.Room</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <button type="submit" class="btn btn-success">Save pending enrollment</button>
+    }
+    <a asp-controller="Student" asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+</form>

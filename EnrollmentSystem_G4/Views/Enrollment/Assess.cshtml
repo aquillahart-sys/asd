@@ -1,112 +1,100 @@
-﻿@model List<EnrollmentSystem_G4.Models.Subject>
+﻿@model EnrollmentSystem_G4.Models.EnrollmentAssessmentViewModel
 
 @{
-    var student = ViewBag.Student as EnrollmentSystem_G4.Models.Student;
-    ViewData["Title"] = "Fee Assessment";
+    ViewData["Title"] = "Enrollment Assessment";
 }
 
-<div class="container mt-4">
-    <div class="card shadow mb-4">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">Fee Assessment & Enrollment</h4>
-            <span class="badge bg-light text-dark fs-6">Rate: ₱500.00 / Unit</span>
-        </div>
+<h1 class="h3">Enrollment Assessment</h1>
+<p class="text-muted mb-1">
+    @Model.Student.FullName (@Model.Student.StudentNumber) · @Model.Enrollment.AcademicYear · @Model.Enrollment.Semester
+</p>
+<p>Status: <span class="badge bg-secondary">@Model.Enrollment.Status</span></p>
 
-        <div class="card-body">
-            @if (student != null)
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead><tr><th>Subject</th><th>Section</th><th>Schedule</th><th>Units</th></tr></thead>
+        <tbody>
+            @foreach (var offering in Model.Offerings)
             {
-                <h5>Student: <strong>@student.GetFullName()</strong> (@student.StudentNumber)</h5>
-                <p class="text-muted mb-3">Email: @student.Email</p>
+                <tr>
+                    <td>@offering.SubjectCode - @offering.SubjectDescription</td>
+                    <td>@offering.Section</td>
+                    <td>@offering.Schedule</td>
+                    <td>@offering.Units</td>
+                </tr>
             }
+        </tbody>
+        <tfoot><tr><th colspan="3" class="text-end">Total units</th><th>@Model.TotalUnits</th></tr></tfoot>
+    </table>
+</div>
 
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
-            }
-
-            <form asp-action="Confirm" method="post">
-                <input type="hidden" name="studentId" value="@student?.StudentId" />
-
-                <h5 class="mt-4 mb-3">Available Subjects</h5>
-
-                @if (Model == null || !Model.Any())
-                {
-                    <div class="alert alert-warning">
-                        No subjects found in the database. Please insert sample subjects into the <code>subjects</code> table in phpMyAdmin.
-                    </div>
-                }
-                else
-                {
-                    <table class="table table-bordered align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th style="width: 50px;" class="text-center">Select</th>
-                                <th>Subject Code</th>
-                                <th>Description</th>
-                                <th class="text-center">Units</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var sub in Model)
-                            {
-                                <tr>
-                                    <td class="text-center">
-                                        <input type="checkbox" name="selectedSubjects" value="@sub.SubjectId" class="form-check-input subject-checkbox" data-units="@sub.Units" />
-                                    </td>
-                                    <td><strong>@sub.SubjectCode</strong></td>
-                                    <td>@sub.SubjectDescription</td>
-                                    <td class="text-center"><span class="badge bg-secondary">@sub.Units</span></td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-
-                    <!-- Calculated Total Units & Fee Summary Bar -->
-                    <div class="card bg-light border mt-3 mb-4">
-                        <div class="card-body d-flex justify-content-between align-items-center py-2">
-                            <div>
-                                <span class="fw-bold">Total Selected Units:</span>
-                                <span id="selectedUnits" class="badge bg-info text-dark fs-6 ms-1">0 Units</span>
-                            </div>
-                            <div>
-                                <span class="fw-bold">Estimated Total Assessment:</span>
-                                <span id="estimatedFee" class="text-success fw-bold fs-5 ms-1">₱0.00</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center mt-4">
-                        <a asp-controller="Student" asp-action="Index" class="btn btn-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-success">Calculate & Process Assessment</button>
-                    </div>
-                }
-            </form>
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3"><span class="text-muted">Rate / unit</span><div class="fw-bold">₱@Model.RatePerUnit.ToString("N2")</div></div>
+            <div class="col-md-3"><span class="text-muted">Tuition fee</span><div class="fw-bold">₱@Model.TuitionFee.ToString("N2")</div></div>
+            <div class="col-md-3"><span class="text-muted">Miscellaneous</span><div class="fw-bold">₱@Model.MiscellaneousFee.ToString("N2")</div></div>
+            <div class="col-md-3"><span class="text-muted">Other fees</span><div class="fw-bold">₱@Model.OtherFees.ToString("N2")</div></div>
+            <div class="col-md-3"><span class="text-muted">Assessment</span><div class="fw-bold">₱@Model.TotalAssessment.ToString("N2")</div></div>
+            <div class="col-md-3"><span class="text-muted">Required downpayment</span><div class="fw-bold">₱@Model.RequiredDownpayment.ToString("N2")</div></div>
+            <div class="col-md-3"><span class="text-muted">Paid / balance</span><div class="fw-bold">₱@Model.TotalPaid.ToString("N2") / ₱@Model.RemainingBalance.ToString("N2")</div></div>
         </div>
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const checkboxes = document.querySelectorAll(".subject-checkbox");
-            const unitsDisplay = document.getElementById("selectedUnits");
-            const feeDisplay = document.getElementById("estimatedFee");
-            const ratePerUnit = 500.00;
-
-            function calculateTotals() {
-                let totalUnits = 0;
-                checkboxes.forEach(cb => {
-                    if (cb.checked) {
-                        totalUnits += parseInt(cb.getAttribute("data-units")) || 0;
-                    }
-                });
-
-                let totalAssessment = totalUnits * ratePerUnit;
-                unitsDisplay.textContent = totalUnits + " Units";
-                feeDisplay.textContent = "₱" + totalAssessment.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            }
-
-            checkboxes.forEach(cb => cb.addEventListener("change", calculateTotals));
-        });
-    </script>
+@if (Model.Enrollment.Status == "PENDING")
+{
+    @if (User.IsInRole("Administrator") || User.IsInRole("Registrar"))
+    {
+        <form asp-action="SaveAssessment" method="post" class="d-inline">
+            <input type="hidden" name="enrollmentId" value="@Model.Enrollment.EnrollmentId" />
+            <button type="submit" class="btn btn-primary">Save assessment</button>
+        </form>
+    }
+    else
+    {
+        <span class="text-muted">This enrollment is awaiting assessment by a Registrar or Administrator.</span>
+    }
 }
+else if (Model.Enrollment.Status == "ASSESSED")
+{
+    <div class="d-flex gap-2 flex-wrap">
+        @if (User.IsInRole("Administrator") || User.IsInRole("Cashier"))
+        {
+            <a asp-controller="Payment" asp-action="Create" asp-route-enrollmentId="@Model.Enrollment.EnrollmentId" class="btn btn-outline-primary">Record payment</a>
+        }
+        @if (Model.CanConfirm && (User.IsInRole("Administrator") || User.IsInRole("Registrar")))
+        {
+            <form asp-action="Confirm" method="post">
+                <input type="hidden" name="enrollmentId" value="@Model.Enrollment.EnrollmentId" />
+                <button type="submit" class="btn btn-success">Confirm enrollment and create schedule</button>
+            </form>
+        }
+        else if (!Model.CanConfirm)
+        {
+            <span class="text-muted align-self-center">Record the required downpayment before confirmation.</span>
+        }
+        else
+        {
+            <span class="text-muted align-self-center">Downpayment satisfied; awaiting Administrator or Registrar confirmation.</span>
+        }
+    </div>
+}
+else if (Model.Enrollment.Status == "CONFIRMED")
+{
+    <a asp-controller="Payment" asp-action="GenerateReport" asp-route-type="COR" asp-route-enrollmentId="@Model.Enrollment.EnrollmentId" class="btn btn-success">View Certificate of Registration</a>
+    @if (User.IsInRole("Administrator") || User.IsInRole("Cashier"))
+    {
+        <a asp-controller="Payment" asp-action="Create" asp-route-enrollmentId="@Model.Enrollment.EnrollmentId" class="btn btn-outline-primary ms-2">Record monthly payment</a>
+    }
+}
+<a asp-action="Index" class="btn btn-secondary ms-2">Back to enrollments</a>

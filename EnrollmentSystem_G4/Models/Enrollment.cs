@@ -50,55 +50,45 @@ namespace EnrollmentSystem_G4.Models
             return TotalAssessment - TotalPayment;
         }
 
-        // Domain Method: Update status based on payment thresholds
-        public void EvaluateStatus()
+        public bool CanConfirm(decimal totalPaid)
         {
-            if (GetRemainingBalance() <= 0 && TotalAssessment > 0)
-            {
-                Status = "Fully Paid";
-            }
-            else if (TotalPayment > 0)
-            {
-                Status = "Enrolled";
-            }
-            else
-            {
-                Status = "Pending";
-            }
+            return TotalAssessment > 0 && totalPaid >= RequiredDownpayment;
         }
 
-        // Domain Method: Generate standard 3-part installment schedule
-        public List<PaymentSchedule> GenerateDefaultSchedules(int enrollmentId)
-        {
-            decimal installmentAmount = TotalAssessment / 3m;
+        public decimal RequiredDownpayment { get; set; }
 
-            return new List<PaymentSchedule>
+        public List<PaymentSchedule> GenerateMonthlySchedules(
+            int enrollmentId,
+            decimal balance,
+            int installmentCount,
+            DateTime firstDueDate)
+        {
+            if (installmentCount <= 0)
             {
-                new PaymentSchedule
+                throw new ArgumentOutOfRangeException(nameof(installmentCount));
+            }
+
+            var schedules = new List<PaymentSchedule>();
+            decimal regularInstallment = Math.Round(balance / installmentCount, 2);
+            decimal scheduledTotal = 0;
+
+            for (int index = 0; index < installmentCount; index++)
+            {
+                decimal installment = index == installmentCount - 1
+                    ? balance - scheduledTotal
+                    : regularInstallment;
+                scheduledTotal += installment;
+                schedules.Add(new PaymentSchedule
                 {
                     EnrollmentId = enrollmentId,
-                    InstallmentName = "Downpayment",
-                    AmountDue = Math.Round(installmentAmount, 2),
-                    DueDate = DateTime.Now.AddDays(7),
+                    InstallmentName = $"Monthly Installment {index + 1}",
+                    ExpectedAmount = installment,
+                    DueDate = firstDueDate.AddMonths(index),
                     Status = "Unpaid"
-                },
-                new PaymentSchedule
-                {
-                    EnrollmentId = enrollmentId,
-                    InstallmentName = "Midterm Installment",
-                    AmountDue = Math.Round(installmentAmount, 2),
-                    DueDate = DateTime.Now.AddDays(45),
-                    Status = "Unpaid"
-                },
-                new PaymentSchedule
-                {
-                    EnrollmentId = enrollmentId,
-                    InstallmentName = "Final Installment",
-                    AmountDue = Math.Round(installmentAmount, 2),
-                    DueDate = DateTime.Now.AddDays(90),
-                    Status = "Unpaid"
-                }
-            };
+                });
+            }
+
+            return schedules;
         }
     }
 }

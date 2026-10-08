@@ -1,0 +1,53 @@
+﻿@model IEnumerable<EnrollmentSystem_G4.Models.EnrollmentListItem>
+
+@{
+    ViewData["Title"] = "Enrollments";
+}
+
+<h1 class="h3 mb-3">Enrollments</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Student</th><th>Term</th><th>Units</th><th>Assessment</th>
+                <th>Downpayment</th><th>Paid</th><th>Balance</th><th>Status</th><th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr><td colspan="9" class="text-center text-muted py-4">No enrollments found.</td></tr>
+            }
+            @foreach (var enrollment in Model)
+            {
+                <tr>
+                    <td>@enrollment.StudentName <span class="text-muted">(@enrollment.StudentNumber)</span></td>
+                    <td>@enrollment.AcademicYear<br />@enrollment.Semester</td>
+                    <td>@enrollment.TotalUnits</td>
+                    <td>₱@enrollment.TotalAssessment.ToString("N2")</td>
+                    <td>₱@enrollment.RequiredDownpayment.ToString("N2")</td>
+                    <td>₱@enrollment.TotalPaid.ToString("N2")</td>
+                    <td>₱@enrollment.RemainingBalance.ToString("N2")</td>
+                    <td><span class="badge bg-secondary">@enrollment.Status</span></td>
+                    <td>
+                        <a asp-action="Assess" asp-route-id="@enrollment.EnrollmentId" class="btn btn-sm btn-outline-primary">Details</a>
+                        @if (enrollment.Status == "CONFIRMED")
+                        {
+                            <a asp-controller="Payment" asp-action="GenerateReport" asp-route-type="COR" asp-route-enrollmentId="@enrollment.EnrollmentId" class="btn btn-sm btn-outline-success">COR</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
