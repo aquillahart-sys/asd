@@ -12,7 +12,7 @@
             </div>
             <div class="card-body">
                 <form asp-action="Create" method="post">
-                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
                     <div class="mb-3">
                         <label asp-for="StudentNumber" class="form-label"></label>
@@ -41,17 +41,11 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Academic Program</label>
-                            <select asp-for="ProgramId" class="form-select">
-                                <option value="">-- Select Program --</option>
-                                @if (ViewBag.Programs != null)
-                                {
-                                    @foreach (var prog in ViewBag.Programs)
-                                    {
-                                        <option value="@prog.ProgramId">@prog.ProgramCode - @prog.ProgramName</option>
-                                    }
-                                }
+                            <label asp-for="ProgramId" class="form-label">Academic Program</label>
+                            <select asp-for="ProgramId" asp-items="ViewBag.Programs" class="form-select">
+                                <option value="0">-- No Program Assigned --</option>
                             </select>
+                            <span asp-validation-for="ProgramId" class="text-danger"></span>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label asp-for="YearLevel" class="form-label"></label>
