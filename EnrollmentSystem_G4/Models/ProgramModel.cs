@@ -19,6 +19,8 @@ namespace EnrollmentSystem_G4.Models
         [StringLength(255, ErrorMessage = "Description cannot exceed 255 characters.")]
         public string? Description { get; set; }
 
+        [Required]
+        [RegularExpression("^(Active|Inactive)$", ErrorMessage = "Select a valid program status.")]
         public string Status { get; set; } = "Active";
     }
 }

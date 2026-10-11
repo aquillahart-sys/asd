@@ -23,6 +23,7 @@
                             <input asp-for="Username" class="form-control" autocomplete="off" />
                             <span asp-validation-for="Username" class="text-danger"></span>
                         </div>
+
                         <div class="col-md-6 mb-3">
                             <label asp-for="Role" class="form-label"></label>
                             <select asp-for="Role" class="form-select">
@@ -33,6 +34,7 @@
                             </select>
                             <span asp-validation-for="Role" class="text-danger"></span>
                         </div>
+
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -46,6 +48,7 @@
                             <span asp-validation-for="LastName" class="text-danger"></span>
                         </div>
                     </div>
+
                     <div class="mb-3">
                         <label asp-for="Email" class="form-label"></label>
                         <input asp-for="Email" class="form-control" type="email" />
@@ -67,4 +70,9 @@
             </div>
         </div>
     </div>
+
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

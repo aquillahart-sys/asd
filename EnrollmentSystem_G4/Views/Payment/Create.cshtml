@@ -100,6 +100,7 @@
                                 <option>Bank Transfer</option>
                                 <option>Check</option>
                             </select>
+                            <span asp-validation-for="PaymentMethod" class="text-danger"></span>
                         </div>
                     </div>
 
@@ -115,6 +116,7 @@
 </div>
 
 @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script>
         const enrollmentSelect = document.getElementById("enrollmentSelect");
         const scheduleSelect = document.getElementById("scheduleSelect");

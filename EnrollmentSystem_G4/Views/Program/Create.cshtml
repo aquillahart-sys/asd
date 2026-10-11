@@ -34,7 +34,9 @@
             <div class="mb-4">
                 <label asp-for="Status" class="form-label"></label>
                 <select asp-for="Status" class="form-select"><option>Active</option><option>Inactive</option></select>
+                <span asp-validation-for="Status" class="text-danger"></span>
             </div>
+
             <div class="d-flex justify-content-between">
                 <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
                 <button type="submit" class="btn btn-primary">Create program</button>

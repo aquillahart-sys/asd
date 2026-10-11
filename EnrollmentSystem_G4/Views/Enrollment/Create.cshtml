@@ -12,6 +12,7 @@
     <div class="col-sm-4">
         <label asp-for="AcademicYear" class="form-label"></label>
         <input asp-for="AcademicYear" name="academicYear" class="form-control" />
+        <span asp-validation-for="AcademicYear" class="text-danger"></span>
     </div>
     <div class="col-sm-4">
         <label asp-for="Semester" class="form-label"></label>
@@ -20,6 +21,7 @@
             <option>2nd Semester</option>
             <option>Summer</option>
         </select>
+        <span asp-validation-for="Semester" class="text-danger"></span>
     </div>
     <div class="col-sm-4"><button type="submit" class="btn btn-outline-primary">Load offerings</button></div>
 </form>
@@ -63,3 +65,7 @@
     }
     <a asp-controller="Student" asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
 </form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

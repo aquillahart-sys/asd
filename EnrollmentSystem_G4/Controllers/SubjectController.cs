@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using EnrollmentSystem_G4.Data;
 using EnrollmentSystem_G4.Models;
+using MySql.Data.MySqlClient;
 
 namespace EnrollmentSystem_G4.Controllers
 {
@@ -54,36 +55,46 @@ namespace EnrollmentSystem_G4.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(Subject subject)
         {
+            subject.SubjectCode = subject.SubjectCode?.Trim() ?? string.Empty;
+            subject.SubjectDescription = subject.SubjectDescription?.Trim() ?? string.Empty;
+
             if (ModelState.IsValid)
             {
                 string code = subject.SubjectCode.Trim();
-                int createdId = _db.ExecuteInTransaction((connection, transaction) =>
+                try
                 {
-                    _db.ExecuteNonQuery(
-                        connection,
-                        transaction,
-                        "INSERT INTO subjects (subject_code, subject_description, units) VALUES (@Code, @Desc, @Units)",
-                        new Dictionary<string, object>
-                        {
-                            { "@Code", code },
-                            { "@Desc", subject.SubjectDescription.Trim() },
-                            { "@Units", subject.Units }
-                        });
-                    int id = Convert.ToInt32(_db.ExecuteScalar(connection, transaction, "SELECT LAST_INSERT_ID()"));
-                    int actorId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int value)
-                        ? value
-                        : throw new InvalidOperationException("The authenticated user ID is missing.");
-                    _audit.Log(connection, transaction, actorId, "SUBJECT_CREATE", "Subject", id.ToString(),
-                        $"Created subject '{code}'.");
-                    return id;
-                });
-                if (createdId > 0)
-                {
-                    TempData["SuccessMessage"] = "Subject created successfully!";
-                    return RedirectToAction(nameof(Index));
-                }
+                    int createdId = _db.ExecuteInTransaction((connection, transaction) =>
+                    {
+                        _db.ExecuteNonQuery(
+                            connection,
+                            transaction,
+                            "INSERT INTO subjects (subject_code, subject_description, units) VALUES (@Code, @Desc, @Units)",
+                            new Dictionary<string, object>
+                            {
+                                { "@Code", code },
+                                { "@Desc", subject.SubjectDescription },
+                                { "@Units", subject.Units }
+                            });
+                        int id = Convert.ToInt32(_db.ExecuteScalar(connection, transaction, "SELECT LAST_INSERT_ID()"));
+                        int actorId = int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out int value)
+                            ? value
+                            : throw new InvalidOperationException("The authenticated user ID is missing.");
+                        _audit.Log(connection, transaction, actorId, "SUBJECT_CREATE", "Subject", id.ToString(),
+                            $"Created subject '{code}'.");
+                        return id;
+                    });
+                    if (createdId > 0)
+                    {
+                        TempData["SuccessMessage"] = "Subject created successfully!";
+                        return RedirectToAction(nameof(Index));
+                    }
 
-                ModelState.AddModelError("", "Failed to save subject.");
+                    ModelState.AddModelError(string.Empty, "The subject could not be saved.");
+                }
+                catch (MySqlException ex) when (ex.Number == 1062)
+                {
+                    ModelState.AddModelError(nameof(subject.SubjectCode), "Subject code already exists.");
+                }
             }
 
             return View(subject);

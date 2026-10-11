@@ -41,8 +41,21 @@ CREATE TABLE IF NOT EXISTS subject_offerings (
     program_id INT NULL,
     room VARCHAR(50) NOT NULL DEFAULT 'TBA',
     CONSTRAINT fk_offerings_subject
-        FOREIGN KEY (subject_id) REFERENCES subjects(subject_id)
+        FOREIGN KEY (subject_id) REFERENCES subjects(subject_id),
+    CONSTRAINT uq_subject_offering_term_section
+        UNIQUE (subject_id, academic_year, semester, section)
 ) ENGINE=InnoDB;
+
+SET @add_offering_unique = IF(
+    (SELECT COUNT(*) FROM information_schema.statistics
+     WHERE table_schema = DATABASE()
+       AND table_name = 'subject_offerings'
+       AND index_name = 'uq_subject_offering_term_section') = 0,
+    'ALTER TABLE subject_offerings ADD UNIQUE INDEX uq_subject_offering_term_section (subject_id, academic_year, semester, section)',
+    'SELECT 1');
+PREPARE add_offering_unique_stmt FROM @add_offering_unique;
+EXECUTE add_offering_unique_stmt;
+DEALLOCATE PREPARE add_offering_unique_stmt;
 
 CREATE TABLE IF NOT EXISTS users (
     user_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -81,10 +94,31 @@ CREATE TABLE IF NOT EXISTS enrollments (
     required_downpayment DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     status VARCHAR(30) NOT NULL DEFAULT 'Pending',
     enrollment_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    active_student_id INT GENERATED ALWAYS AS (
+        CASE WHEN UPPER(status) <> 'CANCELLED' THEN student_id ELSE NULL END
+    ) STORED,
     CONSTRAINT fk_enrollments_student
         FOREIGN KEY (student_id) REFERENCES students(student_id),
+    CONSTRAINT uq_enrollments_active_student_term
+        UNIQUE (active_student_id, academic_year, semester),
     INDEX ix_enrollments_student_term (student_id, academic_year, semester)
 ) ENGINE=InnoDB;
+
+ALTER TABLE enrollments
+    ADD COLUMN IF NOT EXISTS active_student_id INT GENERATED ALWAYS AS (
+        CASE WHEN UPPER(status) <> 'CANCELLED' THEN student_id ELSE NULL END
+    ) STORED;
+
+SET @add_enrollment_unique = IF(
+    (SELECT COUNT(*) FROM information_schema.statistics
+     WHERE table_schema = DATABASE()
+       AND table_name = 'enrollments'
+       AND index_name = 'uq_enrollments_active_student_term') = 0,
+    'ALTER TABLE enrollments ADD UNIQUE INDEX uq_enrollments_active_student_term (active_student_id, academic_year, semester)',
+    'SELECT 1');
+PREPARE add_enrollment_unique_stmt FROM @add_enrollment_unique;
+EXECUTE add_enrollment_unique_stmt;
+DEALLOCATE PREPARE add_enrollment_unique_stmt;
 
 CREATE TABLE IF NOT EXISTS enrollment_details (
     enrollment_detail_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,

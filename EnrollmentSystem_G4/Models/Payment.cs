@@ -5,16 +5,24 @@ namespace EnrollmentSystem_G4.Models
     public class Payment
     {
         public int PaymentId { get; set; }
+        [Range(1, int.MaxValue, ErrorMessage = "Select an existing enrollment.")]
         public int EnrollmentId { get; set; }
         public int? ScheduleId { get; set; }
         public int StudentId { get; set; }
+        [Required(ErrorMessage = "Receipt/reference number is required.")]
+        [StringLength(50, ErrorMessage = "Receipt/reference number cannot exceed 50 characters.")]
         public string ReceiptNumber { get; set; } = string.Empty;
 
-        [Range(typeof(decimal), "0.01", "999999999.99", ErrorMessage = "Enter a payment amount greater than zero.")]
+        [Range(typeof(decimal), "0.01", "99999999.99", ErrorMessage = "Enter a payment amount greater than zero and within the supported limit.")]
         public decimal AmountPaid { get; set; }
 
         public DateTime PaymentDate { get; set; } = DateTime.Now;
+        [Required(ErrorMessage = "Select a payment type.")]
+        [StringLength(30)]
         public string FeeType { get; set; } = "Full Tuition Fee"; // e.g., Full Tuition Fee, Downpayment, Partial Tuition
+
+        [Required(ErrorMessage = "Select a payment method.")]
+        [StringLength(50)]
         public string PaymentMethod { get; set; } = "Cash"; // Cash, GCash, Bank Transfer, Check
         public int? ProcessedBy { get; set; }
 
