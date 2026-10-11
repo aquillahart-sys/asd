@@ -4,6 +4,7 @@ using EnrollmentSystem_G4.Data;
 using EnrollmentSystem_G4.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MySql.Data.MySqlClient;
 
 namespace EnrollmentSystem_G4.Controllers
 {
@@ -42,6 +43,12 @@ namespace EnrollmentSystem_G4.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(SubjectOffering offering)
         {
+            offering.AcademicYear = offering.AcademicYear?.Trim() ?? string.Empty;
+            offering.Semester = offering.Semester?.Trim() ?? string.Empty;
+            offering.Section = offering.Section?.Trim() ?? string.Empty;
+            offering.Schedule = string.IsNullOrWhiteSpace(offering.Schedule) ? null : offering.Schedule.Trim();
+            offering.Room = string.IsNullOrWhiteSpace(offering.Room) ? "TBA" : offering.Room.Trim();
+
             if (!ModelState.IsValid)
             {
                 LoadSubjects();
@@ -64,47 +71,61 @@ namespace EnrollmentSystem_G4.Controllers
                 }) ?? 0);
             if (duplicates > 0)
             {
-                ModelState.AddModelError(nameof(offering.Section), "This subject offering already exists.");
+                ModelState.AddModelError(nameof(offering.Section), "Offering already exists.");
                 LoadSubjects();
                 return View(offering);
             }
 
-            int actorId = GetCurrentUserId();
-            int offeringId = _db.ExecuteInTransaction((connection, transaction) =>
+            try
             {
-                _db.ExecuteNonQuery(
-                    connection,
-                    transaction,
-                    @"INSERT INTO subject_offerings
-                        (subject_id, academic_year, semester, section, schedule, room, status)
-                      VALUES (@SubjectId, @AcademicYear, @Semester, @Section, @Schedule, @Room, 'Active')",
-                    new Dictionary<string, object>
-                    {
-                        { "@SubjectId", offering.SubjectId },
-                        { "@AcademicYear", offering.AcademicYear.Trim() },
-                        { "@Semester", offering.Semester.Trim() },
-                        { "@Section", offering.Section.Trim() },
-                        { "@Schedule", (object?)offering.Schedule ?? DBNull.Value },
-                        { "@Room", (object?)offering.Room ?? DBNull.Value }
-                    });
+                int actorId = GetCurrentUserId();
+                int offeringId = _db.ExecuteInTransaction((connection, transaction) =>
+                {
+                    _db.ExecuteNonQuery(
+                        connection,
+                        transaction,
+                        @"INSERT INTO subject_offerings
+                            (subject_id, academic_year, semester, section, schedule, room, status)
+                          VALUES (@SubjectId, @AcademicYear, @Semester, @Section, @Schedule, @Room, 'Active')",
+                        new Dictionary<string, object>
+                        {
+                            { "@SubjectId", offering.SubjectId },
+                            { "@AcademicYear", offering.AcademicYear },
+                            { "@Semester", offering.Semester },
+                            { "@Section", offering.Section },
+                            { "@Schedule", (object?)offering.Schedule ?? DBNull.Value },
+                            { "@Room", (object?)offering.Room ?? DBNull.Value }
+                        });
 
-                int newId = Convert.ToInt32(_db.ExecuteScalar(
-                    connection,
-                    transaction,
-                    "SELECT LAST_INSERT_ID()"));
-                _audit.Log(
-                    connection,
-                    transaction,
-                    actorId,
-                    "OFFERING_CREATE",
-                    "SubjectOffering",
-                    newId.ToString(),
-                    $"Created offering for subject {offering.SubjectId}, {offering.AcademicYear} {offering.Semester}, section {offering.Section}.");
-                return newId;
-            });
+                    int newId = Convert.ToInt32(_db.ExecuteScalar(
+                        connection,
+                        transaction,
+                        "SELECT LAST_INSERT_ID()"));
+                    _audit.Log(
+                        connection,
+                        transaction,
+                        actorId,
+                        "OFFERING_CREATE",
+                        "SubjectOffering",
+                        newId.ToString(),
+                        $"Created offering for subject {offering.SubjectId}, {offering.AcademicYear} {offering.Semester}, section {offering.Section}.");
+                    return newId;
+                });
 
-            TempData["SuccessMessage"] = $"Subject offering {offeringId} created.";
-            return RedirectToAction(nameof(Index));
+                TempData["SuccessMessage"] = $"Subject offering {offeringId} created.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (MySqlException ex) when (ex.Number == 1062)
+            {
+                ModelState.AddModelError(nameof(offering.Section), "Offering already exists for this term.");
+            }
+            catch (MySqlException ex) when (ex.Number == 1452)
+            {
+                ModelState.AddModelError(nameof(offering.SubjectId), "Select an available subject.");
+            }
+
+            LoadSubjects();
+            return View(offering);
         }
 
         private void LoadSubjects()

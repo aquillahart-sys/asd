@@ -136,7 +136,7 @@ namespace EnrollmentSystem_G4.Controllers
                 }
                 catch (MySqlException ex) when (ex.Number == 1062)
                 {
-                    ModelState.AddModelError(nameof(student.StudentNumber), "This student number is already registered. Enter a unique student number.");
+                    ModelState.AddModelError(nameof(student.StudentNumber), "Student number already exists.");
                     PopulatePrograms(student.ProgramId);
                     return View(student);
                 }

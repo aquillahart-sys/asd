@@ -292,7 +292,7 @@ namespace EnrollmentSystem_G4.Controllers
             }
             catch (MySqlException ex) when (ex.Number == 1062)
             {
-                ModelState.AddModelError(nameof(payment.ReceiptNumber), "That receipt/reference number has already been used.");
+                ModelState.AddModelError(nameof(payment.ReceiptNumber), "Receipt number already exists.");
             }
 
             LoadPaymentOptions(payment.EnrollmentId);

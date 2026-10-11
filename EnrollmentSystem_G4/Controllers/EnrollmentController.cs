@@ -87,10 +87,19 @@ namespace EnrollmentSystem_G4.Controllers
         [Authorize(Roles = "Administrator,Registrar")]
         public IActionResult Create(EnrollmentSelectionViewModel model)
         {
+            model.SelectedOfferingIds ??= new List<int>();
+            model.AcademicYear = model.AcademicYear?.Trim() ?? string.Empty;
+            model.Semester = model.Semester?.Trim() ?? string.Empty;
             model.Student = FindStudent(model.StudentId) ?? new Student();
             if (model.Student.StudentId == 0)
             {
                 return NotFound();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                LoadOfferings(model);
+                return View(model);
             }
 
             if (model.SelectedOfferingIds.Count == 0 ||
@@ -125,7 +134,7 @@ namespace EnrollmentSystem_G4.Controllers
                         new Dictionary<string, object> { { "@StudentId", model.StudentId } });
                     if (lockedStudent == null || lockedStudent == DBNull.Value)
                     {
-                        throw new InvalidOperationException("The selected student no longer exists.");
+                        throw new EnrollmentValidationException("The selected student no longer exists.");
                     }
 
                     int duplicate = Convert.ToInt32(_db.ExecuteScalar(
@@ -144,7 +153,7 @@ namespace EnrollmentSystem_G4.Controllers
                         }) ?? 0);
                     if (duplicate > 0)
                     {
-                        throw new InvalidOperationException("This student already has an enrollment for that term.");
+                        throw new EnrollmentValidationException("Enrollment already exists for this term.");
                     }
 
                     _db.ExecuteNonQuery(
@@ -203,9 +212,17 @@ namespace EnrollmentSystem_G4.Controllers
                 TempData["SuccessMessage"] = "Pending enrollment and selected offerings were saved.";
                 return RedirectToAction(nameof(Assess), new { id = enrollmentId });
             }
-            catch (InvalidOperationException ex)
+            catch (EnrollmentValidationException ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
+                LoadOfferings(model);
+                return View(model);
+            }
+            catch (MySqlException ex) when (ex.Number == 1062)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Enrollment or offering already exists.");
                 LoadOfferings(model);
                 return View(model);
             }
@@ -648,6 +665,13 @@ namespace EnrollmentSystem_G4.Controllers
         private static string NormalizeStatus(string status)
         {
             return status.Trim().ToUpperInvariant();
+        }
+
+        private sealed class EnrollmentValidationException : Exception
+        {
+            public EnrollmentValidationException(string message) : base(message)
+            {
+            }
         }
     }
 }

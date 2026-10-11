@@ -108,7 +108,7 @@ namespace EnrollmentSystem_G4.Controllers
             }
             catch (MySqlException ex) when (ex.Number == 1062)
             {
-                ModelState.AddModelError(string.Empty, "The username or email address is already in use.");
+                ModelState.AddModelError(string.Empty, "Username or email already exists.");
                 return View(model);
             }
 
@@ -257,7 +257,7 @@ namespace EnrollmentSystem_G4.Controllers
             }
             catch (MySqlException ex) when (ex.Number == 1062)
             {
-                ModelState.AddModelError(string.Empty, "The username or email address is already in use.");
+                ModelState.AddModelError(string.Empty, "Username or email already exists.");
                 return View(model);
             }
 

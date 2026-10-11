@@ -55,15 +55,22 @@
                                 <option value="3rd Year">3rd Year</option>
                                 <option value="4th Year">4th Year</option>
                             </select>
+                            <span asp-validation-for="YearLevel" class="text-danger"></span>
                         </div>
+
                     </div>
 
                     <div class="d-flex justify-content-between mt-3">
                         <a asp-action="Index" class="btn btn-secondary">Back to List</a>
                         <button type="submit" class="btn btn-success">Register Student</button>
                     </div>
+
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

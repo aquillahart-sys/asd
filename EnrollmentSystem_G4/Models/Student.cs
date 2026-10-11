@@ -12,10 +12,12 @@ namespace EnrollmentSystem_G4.Models
         [Display(Name = "Student Number")]
         public string StudentNumber { get; set; } = string.Empty;
 
+        [Range(0, int.MaxValue, ErrorMessage = "Select a valid academic program.")]
         public int ProgramId { get; set; }
 
         [Required(ErrorMessage = "Year level is required.")]
         [StringLength(20)]
+        [RegularExpression("^(1st Year|2nd Year|3rd Year|4th Year)$", ErrorMessage = "Select a valid year level.")]
         public string YearLevel { get; set; } = "1st Year";
         public string FullName => $"{FirstName} {LastName}";
         // Domain Associations

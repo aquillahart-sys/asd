@@ -61,32 +61,39 @@ namespace EnrollmentSystem_G4.Controllers
                 string code = model.ProgramCode.Trim();
                 string name = model.ProgramName.Trim();
                 int actorId = GetCurrentUserId();
-                int createdId = _dbHelper.ExecuteInTransaction((connection, transaction) =>
+                try
                 {
-                    _dbHelper.ExecuteNonQuery(
-                        connection,
-                        transaction,
-                        "INSERT INTO programs (program_code, program_name, description, status) VALUES (@Code, @Name, @Desc, @Status)",
-                        new Dictionary<string, object>
-                        {
-                            { "@Code", code },
-                            { "@Name", name },
-                            { "@Desc", (object?)model.Description?.Trim() ?? DBNull.Value },
-                            { "@Status", model.Status }
-                        });
-                    int id = Convert.ToInt32(_dbHelper.ExecuteScalar(connection, transaction, "SELECT LAST_INSERT_ID()"));
-                    _audit.Log(connection, transaction, actorId, "PROGRAM_CREATE", "Program", id.ToString(),
-                        $"Created program '{code} - {name}'.");
-                    return id;
-                });
+                    int createdId = _dbHelper.ExecuteInTransaction((connection, transaction) =>
+                    {
+                        _dbHelper.ExecuteNonQuery(
+                            connection,
+                            transaction,
+                            "INSERT INTO programs (program_code, program_name, description, status) VALUES (@Code, @Name, @Desc, @Status)",
+                            new Dictionary<string, object>
+                            {
+                                { "@Code", code },
+                                { "@Name", name },
+                                { "@Desc", (object?)model.Description?.Trim() ?? DBNull.Value },
+                                { "@Status", model.Status }
+                            });
+                        int id = Convert.ToInt32(_dbHelper.ExecuteScalar(connection, transaction, "SELECT LAST_INSERT_ID()"));
+                        _audit.Log(connection, transaction, actorId, "PROGRAM_CREATE", "Program", id.ToString(),
+                            $"Created program '{code} - {name}'.");
+                        return id;
+                    });
 
-                if (createdId > 0)
-                {
-                    TempData["SuccessMessage"] = "Program created successfully!";
-                    return RedirectToAction(nameof(Index));
+                    if (createdId > 0)
+                    {
+                        TempData["SuccessMessage"] = "Program created successfully!";
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                    ModelState.AddModelError(string.Empty, "The program could not be saved.");
                 }
-
-                ModelState.AddModelError("", "Failed to insert program into database.");
+                catch (MySqlException ex) when (ex.Number == 1062)
+                {
+                    ModelState.AddModelError(nameof(model.ProgramCode), "Program code already exists.");
+                }
             }
 
             return View(model);
@@ -132,73 +139,80 @@ namespace EnrollmentSystem_G4.Controllers
             {
                 string code = model.ProgramCode.Trim();
                 string name = model.ProgramName.Trim();
-                string result = _dbHelper.ExecuteInTransaction((connection, transaction) =>
+                try
                 {
-                    DataTable currentRows = _dbHelper.ExecuteQuery(
-                        connection,
-                        transaction,
-                        "SELECT program_code, program_name, description, status FROM programs WHERE program_id = @Id FOR UPDATE",
-                        new Dictionary<string, object> { { "@Id", id } });
-                    if (currentRows.Rows.Count == 0)
+                    string result = _dbHelper.ExecuteInTransaction((connection, transaction) =>
                     {
-                        return "NOT_FOUND";
-                    }
-
-                    DataRow current = currentRows.Rows[0];
-                    int rowsAffected = _dbHelper.ExecuteNonQuery(
-                        connection,
-                        transaction,
-                        @"UPDATE programs
-                          SET program_code = @Code, program_name = @Name, description = @Desc, status = @Status
-                          WHERE program_id = @Id",
-                        new Dictionary<string, object>
+                        DataTable currentRows = _dbHelper.ExecuteQuery(
+                            connection,
+                            transaction,
+                            "SELECT program_code, program_name, description, status FROM programs WHERE program_id = @Id FOR UPDATE",
+                            new Dictionary<string, object> { { "@Id", id } });
+                        if (currentRows.Rows.Count == 0)
                         {
-                            { "@Code", code },
-                            { "@Name", name },
-                            { "@Desc", (object?)model.Description?.Trim() ?? DBNull.Value },
-                            { "@Status", model.Status },
-                            { "@Id", id }
-                        });
-                    if (rowsAffected == 0)
+                            return "NOT_FOUND";
+                        }
+
+                        DataRow current = currentRows.Rows[0];
+                        int rowsAffected = _dbHelper.ExecuteNonQuery(
+                            connection,
+                            transaction,
+                            @"UPDATE programs
+                              SET program_code = @Code, program_name = @Name, description = @Desc, status = @Status
+                              WHERE program_id = @Id",
+                            new Dictionary<string, object>
+                            {
+                                { "@Code", code },
+                                { "@Name", name },
+                                { "@Desc", (object?)model.Description?.Trim() ?? DBNull.Value },
+                                { "@Status", model.Status },
+                                { "@Id", id }
+                            });
+                        if (rowsAffected == 0)
+                        {
+                            return "UNCHANGED";
+                        }
+
+                        string oldDescription = current["description"] == DBNull.Value ? string.Empty : Convert.ToString(current["description"]) ?? string.Empty;
+                        string newDescription = model.Description?.Trim() ?? string.Empty;
+                        var changedFields = new List<string>();
+                        if (!string.Equals(Convert.ToString(current["program_code"]), code, StringComparison.Ordinal))
+                        {
+                            changedFields.Add("code");
+                        }
+                        if (!string.Equals(Convert.ToString(current["program_name"]), name, StringComparison.Ordinal))
+                        {
+                            changedFields.Add("name");
+                        }
+                        if (!string.Equals(oldDescription, newDescription, StringComparison.Ordinal))
+                        {
+                            changedFields.Add("description");
+                        }
+                        if (!string.Equals(Convert.ToString(current["status"]), model.Status, StringComparison.Ordinal))
+                        {
+                            changedFields.Add("status");
+                        }
+
+                        if (changedFields.Count > 0)
+                        {
+                            int actorId = GetCurrentUserId();
+                            _audit.Log(connection, transaction, actorId, "PROGRAM_UPDATE", "Program", id.ToString(),
+                                $"Updated program '{code} - {name}'; changed {string.Join(", ", changedFields)}.");
+                        }
+                        return "UPDATED";
+                    });
+                    if (result == "UPDATED" || result == "UNCHANGED")
                     {
-                        return "UNCHANGED";
+                        TempData["SuccessMessage"] = "Program updated successfully!";
+                        return RedirectToAction(nameof(Index));
                     }
 
-                    string oldDescription = current["description"] == DBNull.Value ? string.Empty : Convert.ToString(current["description"]) ?? string.Empty;
-                    string newDescription = model.Description?.Trim() ?? string.Empty;
-                    var changedFields = new List<string>();
-                    if (!string.Equals(Convert.ToString(current["program_code"]), code, StringComparison.Ordinal))
-                    {
-                        changedFields.Add("code");
-                    }
-                    if (!string.Equals(Convert.ToString(current["program_name"]), name, StringComparison.Ordinal))
-                    {
-                        changedFields.Add("name");
-                    }
-                    if (!string.Equals(oldDescription, newDescription, StringComparison.Ordinal))
-                    {
-                        changedFields.Add("description");
-                    }
-                    if (!string.Equals(Convert.ToString(current["status"]), model.Status, StringComparison.Ordinal))
-                    {
-                        changedFields.Add("status");
-                    }
-
-                    if (changedFields.Count > 0)
-                    {
-                        int actorId = GetCurrentUserId();
-                        _audit.Log(connection, transaction, actorId, "PROGRAM_UPDATE", "Program", id.ToString(),
-                            $"Updated program '{code} - {name}'; changed {string.Join(", ", changedFields)}.");
-                    }
-                    return "UPDATED";
-                });
-                if (result == "UPDATED" || result == "UNCHANGED")
-                {
-                    TempData["SuccessMessage"] = "Program updated successfully!";
-                    return RedirectToAction(nameof(Index));
+                    return NotFound();
                 }
-
-                return NotFound();
+                catch (MySqlException ex) when (ex.Number == 1062)
+                {
+                    ModelState.AddModelError(nameof(model.ProgramCode), "Program code already exists.");
+                }
             }
 
             return View(model);
@@ -246,7 +260,7 @@ namespace EnrollmentSystem_G4.Controllers
                     TempData["ErrorMessage"] = "Program not found or could not be deleted.";
                 }
             }
-            catch (MySqlException)
+            catch (MySqlException ex) when (ex.Number == 1451)
             {
                 TempData["ErrorMessage"] = "Cannot delete this program because students or subjects are linked to it.";
             }

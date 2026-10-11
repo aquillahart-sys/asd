@@ -9,6 +9,7 @@ namespace EnrollmentSystem_G4.Models
         public string Username { get; set; } = string.Empty;
 
         [Required]
+        [StringLength(128, ErrorMessage = "Password cannot exceed 128 characters.")]
         [DataType(DataType.Password)]
         public string Password { get; set; } = string.Empty;
 
