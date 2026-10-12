@@ -25,9 +25,11 @@ first; do not apply it to a database that has not been backed up.
    dotnet run --project EnrollmentSystem_G4 -- --bootstrap-admin
    ```
 
-   The command prompts for the account details and password; it does not echo
-   the password. Create Registrar and Cashier accounts through the administrator
-   user-management page.
+   This command prompts for the account details and password; it does not echo
+   the password. It is a one-time CLI bootstrap, not an in-app account manager.
+   Additional staff accounts and any role or active-status changes must be
+   provisioned through controlled database administration. After creating an
+   account row, use the password-reset command below to set its initial password.
 5. Login accepts only the application's salted PBKDF2-SHA256 format (210,000
    iterations, a 16-byte salt, and a 32-byte hash, stored as Base64). Existing
    unsalted or plaintext credentials are intentionally not accepted. The
@@ -59,18 +61,22 @@ first; do not apply it to a database that has not been backed up.
    receipt history, balances, and the Certificate of Registration (COR); the COR
    is available only after confirmation.
 
-## Administrator user management and audit history
+## Authentication, audit history, and CLI account maintenance
 
-- The Administrator-only **User Accounts** page can create accounts, edit
-  usernames, names, email addresses, and roles, and disable accounts. Password
-  values and hashes are not shown or editable there; use the documented local
-  password-reset command when an account needs a reset.
-- Administrators cannot change their own role or disable their own account.
-  The last active Administrator cannot be demoted or disabled.
-- The Administrator-only **Audit History** page includes successful and failed
-  login attempts, logout, account changes, program changes, enrollment and
-  payment actions. Account edits are recorded with the changed fields; password
-  values, hashes, and salts are never written to audit details.
+- Login, logout, role-based authorization, and the Administrator-only
+  **Audit History** page remain available. The in-app user manager for creating,
+  editing, and disabling staff accounts has been removed.
+- The `--bootstrap-admin` and `--reset-password` commands are local CLI
+  maintenance tools. Bootstrap creates the first Administrator only when the
+  users table is empty; reset replaces an existing account's credential without
+  changing its active status. Neither command provides in-app account
+  management.
+- No user or audit rows are deleted or rewritten by removing the manager.
+  Existing audit entries for account creation, edits, disables, and password
+  resets remain in the database and are still included in the audit history.
+  The page also continues to show login/logout, program, enrollment, payment,
+  and other recorded events. Password values, hashes, and salts are never
+  written to audit details.
 
 ## Negative and backup checks
 
@@ -94,14 +100,16 @@ Use a disposable database copy for these checks:
 
 The following checks were executed over HTTPS against a disposable XAMPP MariaDB
 schema with fictional student data and temporary Administrator, Registrar, and
-Cashier accounts. The test and restore databases were removed after verification.
+Cashier accounts before the in-app user manager was removed. Any account-manager
+operations mentioned in these results are historical checks, not available
+workflows. The test and restore databases were removed after verification.
 These are HTTP integration checks, not a manual graphical-browser demonstration.
 
 | Test | Expected result | Actual result |
 | --- | --- | --- |
 | Login with each of the three roles | Successful login and role-appropriate redirect | Pass |
 | Invalid password and inactive account | Same generic login error; no authenticated access | Pass |
-| Student list and role-restricted pages | Cashier can view students; cashier enrollment/user/audit access and Registrar user/payment access are denied | Pass |
+| Student list and role-restricted pages | Cashier can view students; cashier enrollment/audit access and Registrar payment access are denied | Pass |
 | Create and retrieve a student as Registrar | New fictional record appears in student list; duplicate registration is rejected | Pass |
 | Pending enrollment with duplicate offering IDs | Rejected without creating an enrollment; validation message is visible | Pass |
 | Three-unit assessment at configured rate | Assessment ₱1,500.00; required downpayment ₱300.00 | Pass |
@@ -114,8 +122,6 @@ These are HTTP integration checks, not a manual graphical-browser demonstration.
 | Duplicate receipt number | Rejected; existing receipt remains unchanged | Pass |
 | History, statement of account, and dashboard | Include successful receipts; assessment ₱1,500.00 less payments ₱600.00 gives ₱900.00 remaining | Pass |
 | Audit review | Login success/failure, logout, enrollment, assessment, confirmation, payments, and account disable events are present | Pass |
-| Administrator manager and edit history | Created and edited a staff account, changed its role, disabled it, edited a program, created a subject, and verified those events in the audit view; login/logout/failure events were present and test passwords were absent | Pass |
-| Role enforcement after account editing | Cashier received HTTP 403 for user-management and audit pages | Pass |
 | Logout and account disable | Protected access is redirected to login; disabled account cannot sign in and its existing cookie is revoked | Pass |
 | SQL backup and restore | Non-empty export restored into a separate schema; users, students, enrollment, payments, and audit rows were present | Pass |
 
@@ -135,8 +141,8 @@ the rejection message was visible.
 4. Record a monthly payment as Cashier; show its receipt in payment history,
    the updated balance/dashboard, and the audit entry.
 5. Demonstrate one controlled failure, such as a duplicate receipt or a
-   Cashier opening user management, then sign out and show that a protected page
-   requires login.
+   Cashier opening the Administrator-only audit page, then sign out and show
+   that a protected page requires login.
 
 Use fresh fictional demonstration records and do not reuse any real account
 passwords.

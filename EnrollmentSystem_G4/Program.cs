@@ -167,7 +167,8 @@ if (args.Contains("--bootstrap-admin", StringComparer.Ordinal))
         return userId;
     });
 
-    Console.WriteLine($"Administrator account '{username}' created. Sign in to create Registrar and Cashier accounts.");
+    Console.WriteLine(
+        $"Administrator account '{username}' created. Additional staff accounts require controlled database provisioning.");
     return;
 }
 

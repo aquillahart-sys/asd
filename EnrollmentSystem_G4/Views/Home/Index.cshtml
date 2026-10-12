@@ -60,11 +60,6 @@
         }
         @if (User.IsInRole("Administrator"))
         {
-            <a class="home-link" asp-controller="User" asp-action="Index">
-                <span class="home-link-icon"><i class="bi bi-person-gear" aria-hidden="true"></i></span>
-                <span><strong>User accounts</strong><small>Manage staff access</small></span>
-                <i class="bi bi-arrow-up-right home-link-arrow" aria-hidden="true"></i>
-            </a>
             <a class="home-link" asp-controller="Audit" asp-action="Index">
                 <span class="home-link-icon"><i class="bi bi-shield-check" aria-hidden="true"></i></span>
                 <span><strong>Audit log</strong><small>Review important system actions</small></span>
