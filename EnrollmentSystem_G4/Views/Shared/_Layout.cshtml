@@ -79,10 +79,6 @@
                     @if (User.IsInRole("Administrator"))
                     {
                         <span class="sidebar-section-label sidebar-section-spaced">ADMINISTRATION</span>
-                        <a class="sidebar-link @(currentController == "User" ? "active" : "")"
-                           asp-controller="User" asp-action="Index">
-                            <i class="bi bi-person-gear" aria-hidden="true"></i><span>User accounts</span>
-                        </a>
                         <a class="sidebar-link @(currentController == "Audit" ? "active" : "")"
                            asp-controller="Audit" asp-action="Index">
                             <i class="bi bi-shield-check" aria-hidden="true"></i><span>Audit log</span>
